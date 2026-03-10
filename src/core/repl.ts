@@ -207,6 +207,7 @@ function printBanner(modelName: string, network: string, yolo: boolean, toolCoun
   console.log(dim('  └──────────────────────────────────────────────────────────┘'))
   console.log()
   console.log(dim('  Tip: ') + chalk.white('/help') + dim(' for commands, ') + chalk.white('/model') + dim(' to switch models, ') + chalk.white('Ctrl+C') + dim(' to exit'))
+  console.log(dim('  Web: ') + chalk.underline.hex('#14F195')('wizardcli.com') + dim(' · Docs: ') + chalk.underline.hex('#9945FF')('docs.wizardcli.com'))
   console.log()
 }
 
