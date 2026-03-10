@@ -1,0 +1,38 @@
+<svg width="1200" height="675" viewBox="0 0 1200 675" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="sol" x1="0%" y1="100%" x2="100%" y2="0%"><stop offset="0%" stop-color="#9945FF"/><stop offset="100%" stop-color="#14F195"/></linearGradient>
+    <radialGradient id="bg1" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#1A0A42" stop-opacity="0.5"/><stop offset="100%" stop-opacity="0"/></radialGradient>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="#9945FF" stroke-width="0.3" opacity="0.06"/></pattern>
+    <filter id="glow"><feGaussianBlur stdDeviation="4"/></filter>
+  </defs>
+
+  <rect width="1200" height="675" fill="#080810"/>
+  <rect width="1200" height="675" fill="url(#bg1)"/>
+  <rect width="1200" height="675" fill="url(#grid)"/>
+  <rect x="0" y="0" width="1200" height="3" fill="url(#sol)" opacity="0.8"/>
+
+  <!-- Center content -->
+  <text x="600" y="200" font-family="'Sora',sans-serif" font-size="18" fill="#14F195" text-anchor="middle" letter-spacing="8" font-weight="600">SOMETHING IS COMING</text>
+
+  <rect x="350" y="220" width="500" height="2" fill="url(#sol)" opacity="0.4"/>
+
+  <text x="600" y="310" font-family="'Sora',sans-serif" font-size="80" font-weight="800" fill="url(#sol)" text-anchor="middle">WIZARD CLI</text>
+
+  <text x="600" y="380" font-family="'Inter',sans-serif" font-size="22" fill="#A0A0B0" text-anchor="middle">An AI that lives in your terminal.</text>
+  <text x="600" y="415" font-family="'Inter',sans-serif" font-size="22" fill="#A0A0B0" text-anchor="middle">It reads your code. It writes Solana programs. It deploys them.</text>
+
+  <!-- Time -->
+  <rect x="430" y="460" width="340" height="60" fill="#9945FF" opacity="0.1" stroke="#9945FF" stroke-width="1" stroke-opacity="0.4"/>
+  <text x="600" y="498" font-family="'JetBrains Mono',monospace" font-size="24" fill="#FFFFFF" text-anchor="middle" font-weight="700">3:30 PM EST TODAY</text>
+
+  <!-- URL -->
+  <text x="600" y="580" font-family="'JetBrains Mono',monospace" font-size="16" fill="#14F195" text-anchor="middle" letter-spacing="3">wizardcli.com</text>
+
+  <!-- Sparkles -->
+  <circle cx="200" cy="150" r="3" fill="#14F195" opacity="0.6" filter="url(#glow)"/>
+  <circle cx="1000" cy="120" r="2.5" fill="#9945FF" opacity="0.5" filter="url(#glow)"/>
+  <circle cx="150" cy="500" r="2" fill="#9945FF" opacity="0.4" filter="url(#glow)"/>
+  <circle cx="1050" cy="480" r="3" fill="#14F195" opacity="0.5" filter="url(#glow)"/>
+
+  <rect x="0" y="672" width="1200" height="3" fill="url(#sol)" opacity="0.5"/>
+</svg>
