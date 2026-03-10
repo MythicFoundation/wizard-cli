@@ -1,169 +1,134 @@
 <svg width="1000" height="1000" viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <!-- Solana gradient -->
-    <linearGradient id="sol" x1="0%" y1="100%" x2="100%" y2="0%">
+    <!-- Solana gradient: purple → green -->
+    <linearGradient id="sol" x1="20%" y1="100%" x2="80%" y2="0%">
       <stop offset="0%" stop-color="#9945FF"/>
       <stop offset="100%" stop-color="#14F195"/>
     </linearGradient>
-
-    <!-- Hat body: bottom purple → top green -->
-    <linearGradient id="hat" x1="50%" y1="100%" x2="50%" y2="0%">
-      <stop offset="0%" stop-color="#7B2FCC"/>
-      <stop offset="15%" stop-color="#9945FF"/>
-      <stop offset="50%" stop-color="#6EBB6A"/>
-      <stop offset="75%" stop-color="#14F195"/>
-      <stop offset="100%" stop-color="#B0FFE0"/>
-    </linearGradient>
-
-    <!-- Hat dark side -->
-    <linearGradient id="hatDark" x1="100%" y1="50%" x2="0%" y2="50%">
-      <stop offset="0%" stop-color="#000000" stop-opacity="0"/>
-      <stop offset="100%" stop-color="#000000" stop-opacity="0.35"/>
-    </linearGradient>
-
-    <!-- Brim gradient -->
-    <linearGradient id="brim" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#7B2FCC"/>
-      <stop offset="40%" stop-color="#9945FF"/>
-      <stop offset="100%" stop-color="#14F195"/>
-    </linearGradient>
-
-    <!-- Band -->
-    <linearGradient id="band" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#9945FF"/>
-      <stop offset="50%" stop-color="#14F195"/>
-      <stop offset="100%" stop-color="#9945FF"/>
-    </linearGradient>
-
-    <!-- Star -->
-    <linearGradient id="star" x1="30%" y1="0%" x2="70%" y2="100%">
-      <stop offset="0%" stop-color="#FFFFFF"/>
-      <stop offset="50%" stop-color="#14F195"/>
-      <stop offset="100%" stop-color="#B0FFE0"/>
-    </linearGradient>
-
-    <!-- Glow -->
-    <filter id="glow" x="-25%" y="-25%" width="150%" height="150%">
-      <feGaussianBlur in="SourceGraphic" stdDeviation="8" result="b1"/>
-      <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="b2"/>
-      <feMerge><feMergeNode in="b1"/><feMergeNode in="b2"/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter>
-    <filter id="bigGlow" x="-40%" y="-40%" width="180%" height="180%">
-      <feGaussianBlur stdDeviation="40"/>
-    </filter>
-    <filter id="starGlow" x="-60%" y="-60%" width="220%" height="220%">
-      <feGaussianBlur stdDeviation="15" result="sg"/>
-      <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="sg2"/>
-      <feMerge><feMergeNode in="sg"/><feMergeNode in="sg2"/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter>
-    <filter id="shadow">
-      <feDropShadow dx="0" dy="20" stdDeviation="30" flood-color="#000000" flood-opacity="0.6"/>
-    </filter>
 
     <!-- Background -->
-    <radialGradient id="bg" cx="50%" cy="42%" r="55%">
-      <stop offset="0%" stop-color="#1C0A45"/>
-      <stop offset="60%" stop-color="#0C0520"/>
-      <stop offset="100%" stop-color="#050210"/>
-    </radialGradient>
-    <radialGradient id="aura" cx="50%" cy="38%" r="40%">
-      <stop offset="0%" stop-color="#9945FF" stop-opacity="0.12"/>
-      <stop offset="50%" stop-color="#14F195" stop-opacity="0.04"/>
-      <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+    <radialGradient id="bg" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#120830"/>
+      <stop offset="100%" stop-color="#080415"/>
     </radialGradient>
   </defs>
 
-  <!-- Background -->
+  <!-- Background circle -->
   <circle cx="500" cy="500" r="490" fill="url(#bg)"/>
-  <circle cx="500" cy="500" r="490" fill="url(#aura)"/>
+  <circle cx="500" cy="500" r="488" fill="none" stroke="url(#sol)" stroke-width="2" opacity="0.3"/>
 
-  <!-- Outer ring -->
-  <circle cx="500" cy="500" r="488" fill="none" stroke="url(#sol)" stroke-width="3" opacity="0.4"/>
+  <!-- ═══ WIZARD HAT — matching reference style ═══ -->
+  <g transform="translate(500, 520) scale(1.05)">
 
-  <!-- ═══ HAT ═══ -->
-  <g filter="url(#shadow)">
+    <!-- BRIM — wide oval with double stroke -->
+    <ellipse cx="0" cy="195" rx="280" ry="75" fill="url(#sol)"/>
+    <!-- Brim inner ring -->
+    <ellipse cx="0" cy="195" rx="255" ry="62" fill="none" stroke="#120830" stroke-width="8"/>
+    <!-- Brim highlight ring -->
+    <ellipse cx="0" cy="195" rx="240" ry="55" fill="none" stroke="url(#sol)" stroke-width="3" opacity="0.5"/>
 
-    <!-- Aura behind hat -->
-    <path d="M 320 760 L 455 195 Q 500 50 545 195 L 680 680 Q 580 640 500 650 Q 420 640 320 680 Z"
-          fill="#9945FF" opacity="0.25" filter="url(#bigGlow)"/>
+    <!-- HAT BODY — tall cone with curled tip bending right -->
+    <path d="
+      M -140 170
+      L -70 -120
+      L -40 -220
+      L -10 -280
+      L 15 -310
+      Q 40 -340 65 -330
+      Q 95 -315 110 -280
+      Q 130 -240 140 -210
+      Q 155 -175 160 -155
+      Q 170 -125 168 -105
+      Q 165 -85 150 -82
+      Q 135 -80 118 -95
+      Q 100 -112 85 -135
+      Q 70 -155 60 -160
+      L 50 -130
+      L 80 -30
+      L 130 130
+      L 150 170
+      Z
+    " fill="url(#sol)"/>
 
-    <!-- Hat body -->
-    <path d="M 320 760 L 455 195 Q 500 50 545 195 L 680 680 Q 580 640 500 650 Q 420 640 320 680 Z"
-          fill="url(#hat)"/>
+    <!-- Hat body dark overlay for depth -->
+    <path d="
+      M -140 170
+      L -70 -120
+      L -40 -220
+      L -10 -280
+      L 15 -310
+      Q 25 -328 35 -325
+      L 20 -260
+      L -15 -100
+      L -50 50
+      L -80 170
+      Z
+    " fill="#000000" opacity="0.2"/>
 
-    <!-- Dark side shading -->
-    <path d="M 320 760 L 455 195 Q 500 50 510 140 L 400 650 Q 360 645 320 660 Z"
-          fill="url(#hatDark)"/>
+    <!-- BAND STRIPES — 3 horizontal stripes near base -->
+    <path d="M -130 130 Q 0 105 140 130" fill="none" stroke="#120830" stroke-width="10" stroke-linecap="round"/>
+    <path d="M -125 150 Q 0 125 145 150" fill="none" stroke="#120830" stroke-width="8" stroke-linecap="round"/>
+    <path d="M -118 168 Q 0 148 148 168" fill="none" stroke="#120830" stroke-width="6" stroke-linecap="round"/>
+    <!-- Stripe highlights -->
+    <path d="M -125 128 Q 0 103 135 128" fill="none" stroke="#14F195" stroke-width="2" opacity="0.4" stroke-linecap="round"/>
+    <path d="M -120 148 Q 0 126 140 148" fill="none" stroke="#14F195" stroke-width="1.5" opacity="0.3" stroke-linecap="round"/>
 
-    <!-- Right edge highlight -->
-    <path d="M 545 195 L 670 670" fill="none" stroke="#14F195" stroke-width="1.5" opacity="0.25"/>
+    <!-- STARS ON HAT — 4-pointed stars -->
+    <!-- Star 1 (large, center) -->
+    <path d="M 30 20 L 36 -2 L 42 20 L 64 26 L 42 32 L 36 54 L 30 32 L 8 26 Z" fill="#120830"/>
+    <path d="M 32 21 L 36 4 L 40 21 L 57 26 L 40 31 L 36 48 L 32 31 L 15 26 Z" fill="#14F195" opacity="0.7"/>
 
-    <!-- Tip highlight -->
-    <path d="M 455 195 Q 500 50 545 195" fill="none" stroke="#B0FFE0" stroke-width="2" opacity="0.4"/>
+    <!-- Star 2 (medium, upper left) -->
+    <path d="M -40 -80 L -36 -96 L -32 -80 L -16 -76 L -32 -72 L -36 -56 L -40 -72 L -56 -76 Z" fill="#120830"/>
+    <path d="M -39 -80 L -36 -92 L -33 -80 L -21 -76 L -33 -72 L -36 -60 L -39 -72 L -51 -76 Z" fill="#14F195" opacity="0.6"/>
 
-    <!-- ── Band ── -->
-    <path d="M 328 710 Q 420 685 500 690 Q 575 685 670 710 L 665 735 Q 570 710 500 715 Q 425 710 335 735 Z"
-          fill="url(#band)" opacity="0.8"/>
-    <path d="M 335 718 Q 425 696 500 700 Q 570 696 660 718"
-          fill="none" stroke="#FFFFFF" stroke-width="0.8" opacity="0.2"/>
+    <!-- Star 3 (small, right side) -->
+    <path d="M 100 -20 L 103 -32 L 106 -20 L 118 -17 L 106 -14 L 103 -2 L 100 -14 L 88 -17 Z" fill="#120830"/>
+    <path d="M 101 -20 L 103 -28 L 105 -20 L 113 -17 L 105 -14 L 103 -6 L 101 -14 L 93 -17 Z" fill="#14F195" opacity="0.5"/>
 
-    <!-- ── Brim ── -->
-    <ellipse cx="498" cy="758" rx="250" ry="70" fill="url(#brim)"/>
-    <ellipse cx="498" cy="755" rx="240" ry="62" fill="none" stroke="#14F195" stroke-width="1.5" opacity="0.25"/>
-    <ellipse cx="498" cy="752" rx="235" ry="55" fill="none" stroke="#FFFFFF" stroke-width="0.6" opacity="0.12"/>
+    <!-- Star 4 (tiny, upper) -->
+    <path d="M 55 -190 L 57 -198 L 59 -190 L 67 -188 L 59 -186 L 57 -178 L 55 -186 L 47 -188 Z" fill="#120830"/>
+    <path d="M 56 -190 L 57 -195 L 58 -190 L 63 -188 L 58 -186 L 57 -181 L 56 -186 L 51 -188 Z" fill="#14F195" opacity="0.6"/>
 
-    <!-- Brim underside shadow -->
-    <ellipse cx="498" cy="765" rx="220" ry="50" fill="#000000" opacity="0.15"/>
+    <!-- Curl tip highlight -->
+    <path d="Q 155 -175 160 -155 Q 170 -125 168 -105 Q 165 -85 150 -82"
+          fill="none" stroke="#14F195" stroke-width="2.5" opacity="0.5" stroke-linecap="round"/>
   </g>
 
-  <!-- ═══ STAR ═══ -->
-  <g filter="url(#starGlow)">
-    <polygon points="500,280 516,335 572,335 526,368 543,422 500,392 457,422 474,368 428,335 484,335"
-             fill="url(#star)"/>
-    <circle cx="500" cy="360" r="10" fill="#FFFFFF" opacity="0.5"/>
-  </g>
+  <!-- ═══ FLOATING SPARKLES (upper left, matching reference) ═══ -->
 
-  <!-- ═══ SPARKLES ═══ -->
-  <g filter="url(#glow)">
-    <circle cx="270" cy="320" r="6" fill="#14F195" opacity="0.85">
-      <animate attributeName="opacity" values="0.85;0.1;0.85" dur="2.2s" repeatCount="indefinite"/>
-      <animate attributeName="r" values="6;3;6" dur="2.2s" repeatCount="indefinite"/>
-    </circle>
-    <circle cx="730" cy="280" r="5" fill="#9945FF" opacity="0.7">
-      <animate attributeName="opacity" values="0.15;0.8;0.15" dur="1.8s" repeatCount="indefinite"/>
-      <animate attributeName="r" values="5;2.5;5" dur="1.8s" repeatCount="indefinite"/>
-    </circle>
-    <circle cx="240" cy="560" r="4.5" fill="#9945FF" opacity="0.6">
-      <animate attributeName="opacity" values="0.6;0.05;0.6" dur="3s" repeatCount="indefinite"/>
-    </circle>
-    <circle cx="760" cy="520" r="4" fill="#14F195" opacity="0.5">
-      <animate attributeName="opacity" values="0.5;0.05;0.5" dur="2.6s" repeatCount="indefinite"/>
-    </circle>
-    <circle cx="310" cy="200" r="3" fill="#FFFFFF" opacity="0.4">
-      <animate attributeName="opacity" values="0.4;0;0.4" dur="1.5s" repeatCount="indefinite"/>
-    </circle>
-    <circle cx="690" cy="170" r="2.5" fill="#14F195" opacity="0.35">
-      <animate attributeName="opacity" values="0.05;0.5;0.05" dur="2s" repeatCount="indefinite"/>
-    </circle>
-    <circle cx="220" cy="700" r="3" fill="#14F195" opacity="0.4">
-      <animate attributeName="opacity" values="0.4;0;0.4" dur="2.4s" repeatCount="indefinite"/>
-    </circle>
-    <circle cx="780" cy="670" r="3.5" fill="#9945FF" opacity="0.5">
-      <animate attributeName="opacity" values="0.2;0.7;0.2" dur="1.7s" repeatCount="indefinite"/>
-    </circle>
+  <!-- Large 4-pointed sparkle -->
+  <path d="M 195 200 L 205 168 L 215 200 L 247 210 L 215 220 L 205 252 L 195 220 L 163 210 Z" fill="url(#sol)">
+    <animate attributeName="opacity" values="1;0.4;1" dur="2.5s" repeatCount="indefinite"/>
+  </path>
 
-    <!-- Hat tip particles -->
-    <circle cx="500" cy="55" r="4" fill="#B0FFE0" opacity="0.7">
-      <animate attributeName="cy" values="55;30;55" dur="2s" repeatCount="indefinite"/>
-      <animate attributeName="opacity" values="0.7;0;0.7" dur="2s" repeatCount="indefinite"/>
-    </circle>
-    <circle cx="492" cy="40" r="2.5" fill="#14F195" opacity="0.5">
-      <animate attributeName="cy" values="40;15;40" dur="2.8s" repeatCount="indefinite"/>
-      <animate attributeName="opacity" values="0.5;0;0.5" dur="2.8s" repeatCount="indefinite"/>
-    </circle>
-    <circle cx="510" cy="45" r="2" fill="#FFFFFF" opacity="0.4">
-      <animate attributeName="cy" values="45;20;45" dur="3.2s" repeatCount="indefinite"/>
-      <animate attributeName="opacity" values="0.4;0;0.4" dur="3.2s" repeatCount="indefinite"/>
-    </circle>
-  </g>
+  <!-- Medium 4-pointed sparkle -->
+  <path d="M 260 300 L 266 282 L 272 300 L 290 306 L 272 312 L 266 330 L 260 312 L 242 306 Z" fill="url(#sol)" opacity="0.8">
+    <animate attributeName="opacity" values="0.8;0.2;0.8" dur="2s" repeatCount="indefinite"/>
+  </path>
+
+  <!-- Small 4-pointed sparkle -->
+  <path d="M 170 310 L 174 300 L 178 310 L 188 314 L 178 318 L 174 328 L 170 318 L 160 314 Z" fill="url(#sol)" opacity="0.6">
+    <animate attributeName="opacity" values="0.3;0.8;0.3" dur="1.7s" repeatCount="indefinite"/>
+  </path>
+
+  <!-- Tiny sparkle dot -->
+  <circle cx="230" cy="250" r="5" fill="#14F195" opacity="0.7">
+    <animate attributeName="opacity" values="0.7;0.1;0.7" dur="1.5s" repeatCount="indefinite"/>
+  </circle>
+
+  <!-- Diamond dot -->
+  <rect x="285" cy="230" width="8" height="8" rx="1" fill="#9945FF" opacity="0.6" transform="rotate(45 289 234)">
+    <animate attributeName="opacity" values="0.6;0.1;0.6" dur="2.2s" repeatCount="indefinite"/>
+  </rect>
+
+  <!-- Extra sparkle upper right -->
+  <path d="M 740 180 L 744 168 L 748 180 L 760 184 L 748 188 L 744 200 L 740 188 L 728 184 Z" fill="url(#sol)" opacity="0.5">
+    <animate attributeName="opacity" values="0.2;0.7;0.2" dur="3s" repeatCount="indefinite"/>
+  </path>
+
+  <!-- Bottom right sparkle -->
+  <circle cx="760" cy="720" r="4" fill="#14F195" opacity="0.4">
+    <animate attributeName="opacity" values="0.4;0;0.4" dur="2.8s" repeatCount="indefinite"/>
+  </circle>
 </svg>
