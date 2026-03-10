@@ -95,6 +95,7 @@ const TOOL_ICONS: Record<string, string> = {
   shell: '⚡',
   solana: '◎',
   mythic: '🔮',
+  web: '🌐',
 }
 
 const TOOL_COLORS: Record<string, (s: string) => string> = {
@@ -102,6 +103,7 @@ const TOOL_COLORS: Record<string, (s: string) => string> = {
   shell: chalk.yellow,
   solana: (s: string) => chalk.hex('#9945FF')(s),
   mythic: chalk.green,
+  web: chalk.blue,
   unknown: chalk.gray,
 }
 
@@ -513,6 +515,8 @@ export async function startRepl(initialPrompt?: string) {
     console.log()
 
     const turnStart = Date.now()
+    let turnInputTokens = 0
+    let turnOutputTokens = 0
 
     try {
       const updatedMessages = await streamConversation(
@@ -562,20 +566,26 @@ export async function startRepl(initialPrompt?: string) {
             return result
           },
 
+          onUsage: (inputTokens: number, outputTokens: number) => {
+            // Store real token counts from the API response
+            turnInputTokens = inputTokens
+            turnOutputTokens = outputTokens
+          },
+
           onComplete: () => {
             const elapsed = Date.now() - turnStart
 
-            // Estimate tokens (rough: 4 chars per token)
-            const inputEst = Math.ceil(trimmed.length / 4)
-            const outputEst = Math.ceil(fullResponseText.length / 4)
-            stats.inputTokens += inputEst
-            stats.outputTokens += outputEst
-            stats.cost += estimateCost(inputEst, outputEst, cfg.model)
+            // Use real token counts from API if available, fall back to estimate
+            const inputTok = turnInputTokens > 0 ? turnInputTokens : Math.ceil(trimmed.length / 4)
+            const outputTok = turnOutputTokens > 0 ? turnOutputTokens : Math.ceil(fullResponseText.length / 4)
+            stats.inputTokens += inputTok
+            stats.outputTokens += outputTok
+            stats.cost += estimateCost(inputTok, outputTok, cfg.model)
 
             // Render markdown on the full response
             // (We already streamed raw text; this is just for the final newlines)
             console.log()
-            console.log(chalk.dim(`  ${formatDuration(elapsed)} · ${formatCost(estimateCost(inputEst, outputEst, cfg.model))}`))
+            console.log(chalk.dim(`  ${formatDuration(elapsed)} · ${formatCost(estimateCost(inputTok, outputTok, cfg.model))}`))
             console.log()
 
             isProcessing = false

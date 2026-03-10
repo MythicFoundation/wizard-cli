@@ -14,6 +14,7 @@ export interface StreamCallbacks {
   onToolCall: (toolCall: ToolCall) => Promise<string>
   onComplete: () => void
   onError: (error: Error) => void
+  onUsage?: (inputTokens: number, outputTokens: number) => void
 }
 
 let client: Anthropic | null = null
@@ -42,6 +43,10 @@ export async function streamConversation(
 
   const updatedMessages = [...messages]
 
+  // Track token usage across multi-turn tool-use loops
+  let totalInputTokens = 0
+  let totalOutputTokens = 0
+
   // Loop to handle multi-turn tool use
   while (true) {
     const response = await anthropic.messages.create({
@@ -62,7 +67,12 @@ export async function streamConversation(
     let stopReason: string | null = null
 
     for await (const event of response) {
-      if (event.type === 'content_block_start') {
+      if (event.type === 'message_start') {
+        // message_start contains input token count for this request
+        if (event.message?.usage?.input_tokens) {
+          totalInputTokens += event.message.usage.input_tokens
+        }
+      } else if (event.type === 'content_block_start') {
         if (event.content_block.type === 'text') {
           // Text block starting
         } else if (event.content_block.type === 'tool_use') {
@@ -96,6 +106,10 @@ export async function streamConversation(
         }
       } else if (event.type === 'message_delta') {
         stopReason = event.delta.stop_reason
+        // message_delta contains output token count for this request
+        if ((event as any).usage?.output_tokens) {
+          totalOutputTokens += (event as any).usage.output_tokens
+        }
       }
     }
 
@@ -143,6 +157,9 @@ export async function streamConversation(
     }
 
     // No more tool calls — conversation turn is complete
+    if (callbacks.onUsage) {
+      callbacks.onUsage(totalInputTokens, totalOutputTokens)
+    }
     callbacks.onComplete()
     return updatedMessages
   }

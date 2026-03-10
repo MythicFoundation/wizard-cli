@@ -3,6 +3,7 @@ import { getFilesystemTools, executeFilesystemTool } from './filesystem/index.js
 import { getShellTools, executeShellTool } from './shell/index.js'
 import { getSolanaTools, executeSolanaTool } from './solana/index.js'
 import { getMythicTools, executeMythicTool } from './mythic/index.js'
+import { getWebTools, executeWebTool } from './web/index.js'
 
 const FILESYSTEM_TOOLS = new Set(['read_file', 'write_file', 'edit_file', 'glob_files', 'grep', 'list_directory'])
 const SHELL_TOOLS = new Set(['bash'])
@@ -16,6 +17,7 @@ const MYTHIC_TOOLS = new Set([
   'mythic_deploy_validator', 'mythic_swap_pools', 'mythic_token_info', 'mythic_program_list',
   'mythic_wallet_overview',
 ])
+const WEB_TOOLS = new Set(['web_fetch', 'web_search'])
 
 export function getAllTools(): Tool[] {
   return [
@@ -23,6 +25,7 @@ export function getAllTools(): Tool[] {
     ...getShellTools(),
     ...getSolanaTools(),
     ...getMythicTools(),
+    ...getWebTools(),
   ]
 }
 
@@ -31,7 +34,8 @@ export async function executeTool(name: string, input: Record<string, any>): Pro
   if (SHELL_TOOLS.has(name)) return executeShellTool(name, input)
   if (SOLANA_TOOLS.has(name)) return executeSolanaTool(name, input)
   if (MYTHIC_TOOLS.has(name)) return executeMythicTool(name, input)
-  return `Error: Unknown tool "${name}". Available tools: ${[...FILESYSTEM_TOOLS, ...SHELL_TOOLS, ...SOLANA_TOOLS, ...MYTHIC_TOOLS].join(', ')}`
+  if (WEB_TOOLS.has(name)) return executeWebTool(name, input)
+  return `Error: Unknown tool "${name}". Available tools: ${[...FILESYSTEM_TOOLS, ...SHELL_TOOLS, ...SOLANA_TOOLS, ...MYTHIC_TOOLS, ...WEB_TOOLS].join(', ')}`
 }
 
 export function getToolCategory(name: string): string {
@@ -39,5 +43,6 @@ export function getToolCategory(name: string): string {
   if (SHELL_TOOLS.has(name)) return 'shell'
   if (SOLANA_TOOLS.has(name)) return 'solana'
   if (MYTHIC_TOOLS.has(name)) return 'mythic'
+  if (WEB_TOOLS.has(name)) return 'web'
   return 'unknown'
 }
