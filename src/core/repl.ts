@@ -199,7 +199,7 @@ function printBanner(modelName: string, network: string, yolo: boolean, toolCoun
 
   console.log(dim('  ┌──────────────────────────────────────────────────────────┐'))
   console.log(dim('  │') + ` Model: ${chalk.bold.white(modelDisplay)} ${dim('(')}${providerBadge}${dim(')')}`.padEnd(72) + dim('│'))
-  console.log(dim('  │') + ` Network: ${chalk.bold(network === 'mythic-l2' ? g2('Mythic L2') : chalk.white(network))}${' '.repeat(Math.max(0, 47 - network.length))}` + dim('│'))
+  console.log(dim('  │') + ` Network: ${chalk.bold(network === 'mythic-l2' ? chalk.hex('#14F195')('Mythic L2') : chalk.white(network))}${' '.repeat(Math.max(0, 47 - network.length))}` + dim('│'))
   console.log(dim('  │') + ` Tools: ${chalk.bold.white(String(toolCount))}` + dim(` available`) + `  YOLO: ${yolo ? chalk.red.bold('ON') : dim('off')}`.padEnd(34) + dim('│'))
   if (isFree) {
     console.log(dim('  │') + ` ${chalk.yellow('Free tier')}: ${chalk.white(String(freeStatus!.remaining))}/${chalk.dim('25')} messages remaining today`.padEnd(65) + dim('│'))
