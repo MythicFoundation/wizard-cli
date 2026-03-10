@@ -36,17 +36,7 @@ program
     if (options.keypair) setConfig('keypairPath', options.keypair)
     if (options.rpc) setConfig('customRpc', options.rpc)
 
-    // Check API key
-    const cfg = getConfig()
-    if (!cfg.anthropicApiKey) {
-      console.log(chalk.red('\nNo API key found.'))
-      console.log(chalk.dim('Set it with:'))
-      console.log(chalk.green('  export ANTHROPIC_API_KEY=sk-ant-...'))
-      console.log(chalk.dim('  or'))
-      console.log(chalk.green(`  ${CLI_NAME} config set apiKey sk-ant-...`))
-      console.log()
-      process.exit(1)
-    }
+    // API key always available (free tier fallback)
 
     const initialPrompt = promptParts.length > 0 ? promptParts.join(' ') : undefined
     await startRepl(initialPrompt)

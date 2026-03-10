@@ -1,0 +1,79 @@
+<svg width="800" height="200" viewBox="0 0 800 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="wizardGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#7B2FFF;stop-opacity:1" />
+      <stop offset="35%" style="stop-color:#9945FF;stop-opacity:1" />
+      <stop offset="65%" style="stop-color:#39FF14;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#00E5FF;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="glowGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#7B2FFF;stop-opacity:0.6" />
+      <stop offset="50%" style="stop-color:#39FF14;stop-opacity:0.4" />
+      <stop offset="100%" style="stop-color:#9945FF;stop-opacity:0.6" />
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="softGlow">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="800" height="200" fill="#0A0A0F" rx="12"/>
+
+  <!-- Subtle grid overlay -->
+  <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+    <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#ffffff" stroke-width="0.1" opacity="0.1"/>
+  </pattern>
+  <rect width="800" height="200" fill="url(#grid)" rx="12"/>
+
+  <!-- Glow line at top -->
+  <rect x="100" y="0" width="600" height="2" fill="url(#glowGrad)" opacity="0.8" rx="1"/>
+
+  <!-- Wizard Hat Icon -->
+  <g transform="translate(50, 25)" filter="url(#softGlow)">
+    <!-- Hat body -->
+    <path d="M 60 140 L 85 30 Q 90 10 95 30 L 115 90 Q 100 85 85 90 Q 70 85 60 90 Z" fill="url(#wizardGrad)" opacity="0.9"/>
+    <!-- Hat brim -->
+    <ellipse cx="87" cy="138" rx="45" ry="12" fill="url(#wizardGrad)" opacity="0.7"/>
+    <!-- Star on hat -->
+    <path d="M 87 55 L 90 65 L 100 65 L 92 72 L 95 82 L 87 75 L 79 82 L 82 72 L 74 65 L 84 65 Z" fill="#39FF14" opacity="0.9"/>
+    <!-- Sparkles -->
+    <circle cx="55" cy="50" r="2" fill="#39FF14" opacity="0.8">
+      <animate attributeName="opacity" values="0.8;0.2;0.8" dur="2s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="120" cy="40" r="1.5" fill="#9945FF" opacity="0.8">
+      <animate attributeName="opacity" values="0.2;0.8;0.2" dur="1.5s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="45" cy="85" r="1.5" fill="#00E5FF" opacity="0.6">
+      <animate attributeName="opacity" values="0.6;0.1;0.6" dur="3s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- "WIZARD" text -->
+  <text x="200" y="105" font-family="'SF Mono', 'JetBrains Mono', 'Fira Code', monospace" font-size="72" font-weight="900" fill="url(#wizardGrad)" filter="url(#glow)" letter-spacing="8">WIZARD</text>
+
+  <!-- "CLI" text -->
+  <text x="620" y="105" font-family="'SF Mono', 'JetBrains Mono', 'Fira Code', monospace" font-size="72" font-weight="300" fill="#ffffff" opacity="0.5" letter-spacing="4">CLI</text>
+
+  <!-- Tagline -->
+  <text x="200" y="140" font-family="'Inter', 'SF Pro', sans-serif" font-size="14" fill="#ffffff" opacity="0.4" letter-spacing="3">AI-POWERED SOLANA &amp; MYTHIC L2 DEVELOPMENT</text>
+
+  <!-- Bottom accent line -->
+  <rect x="200" y="155" width="120" height="2" fill="#39FF14" opacity="0.6" rx="1"/>
+  <rect x="330" y="155" width="80" height="2" fill="#9945FF" opacity="0.4" rx="1"/>
+  <rect x="420" y="155" width="40" height="2" fill="#7B2FFF" opacity="0.3" rx="1"/>
+
+  <!-- Version badge -->
+  <rect x="680" y="160" width="80" height="22" rx="4" fill="#39FF14" opacity="0.15" stroke="#39FF14" stroke-width="0.5" opacity="0.3"/>
+  <text x="720" y="175" font-family="'SF Mono', monospace" font-size="11" fill="#39FF14" opacity="0.7" text-anchor="middle">v0.2.0</text>
+</svg>
