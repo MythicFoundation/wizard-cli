@@ -27,7 +27,7 @@ function Navbar() {
           <a href="https://github.com/MythicFoundation/wizard-cli" target="_blank" rel="noopener" className="text-wiz-text-dim hover:text-white transition-colors">
             <FaGithub size={18} />
           </a>
-          <a href="https://x.com/WizardCLI_" target="_blank" rel="noopener" className="text-wiz-text-dim hover:text-white transition-colors">
+          <a href="https://x.com/WizardCLI" target="_blank" rel="noopener" className="text-wiz-text-dim hover:text-white transition-colors">
             <FaXTwitter size={18} />
           </a>
           <a href="https://t.me/wizardcli" target="_blank" rel="noopener" className="text-wiz-text-dim hover:text-white transition-colors">
@@ -422,7 +422,7 @@ function Footer() {
           </div>
           <div className="flex items-center gap-4">
             <a href="https://github.com/MythicFoundation/wizard-cli" target="_blank" rel="noopener" className="text-wiz-text-dim hover:text-white transition-colors"><FaGithub size={16} /></a>
-            <a href="https://x.com/WizardCLI_" target="_blank" rel="noopener" className="text-wiz-text-dim hover:text-white transition-colors"><FaXTwitter size={16} /></a>
+            <a href="https://x.com/WizardCLI" target="_blank" rel="noopener" className="text-wiz-text-dim hover:text-white transition-colors"><FaXTwitter size={16} /></a>
             <a href="https://t.me/wizardcli" target="_blank" rel="noopener" className="text-wiz-text-dim hover:text-white transition-colors"><FaTelegram size={16} /></a>
           </div>
         </div>
