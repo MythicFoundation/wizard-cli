@@ -4,233 +4,279 @@
       <stop offset="0%" stop-color="#9945FF"/>
       <stop offset="100%" stop-color="#14F195"/>
     </linearGradient>
-    <linearGradient id="hatTop" x1="50%" y1="100%" x2="50%" y2="0%">
-      <stop offset="0%" stop-color="#9945FF"/>
-      <stop offset="100%" stop-color="#14F195"/>
-    </linearGradient>
-    <linearGradient id="hatMid" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#7B2FCC"/>
-      <stop offset="50%" stop-color="#9945FF"/>
-      <stop offset="100%" stop-color="#14F195"/>
-    </linearGradient>
-    <linearGradient id="skin" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#FFD4A8"/>
-      <stop offset="100%" stop-color="#E8B878"/>
-    </linearGradient>
-    <linearGradient id="beard" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#E0E0E0"/>
-      <stop offset="100%" stop-color="#A0A0A0"/>
-    </linearGradient>
-    <linearGradient id="robe" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#6B20D6"/>
-      <stop offset="100%" stop-color="#9945FF"/>
-    </linearGradient>
-    <linearGradient id="starG" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#14F195"/>
-      <stop offset="100%" stop-color="#FFFFFF"/>
-    </linearGradient>
-    <linearGradient id="eyeGlow" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#14F195"/>
-      <stop offset="100%" stop-color="#00CC77"/>
-    </linearGradient>
-    <radialGradient id="bg" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#1A0A40"/>
-      <stop offset="70%" stop-color="#0A0520"/>
+    <radialGradient id="bg" cx="50%" cy="45%" r="52%">
+      <stop offset="0%" stop-color="#1A0A42"/>
+      <stop offset="60%" stop-color="#0C0522"/>
       <stop offset="100%" stop-color="#050210"/>
     </radialGradient>
-    <radialGradient id="aura" cx="50%" cy="40%" r="45%">
-      <stop offset="0%" stop-color="#9945FF" stop-opacity="0.15"/>
-      <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+    <radialGradient id="aura" cx="50%" cy="35%" r="40%">
+      <stop offset="0%" stop-color="#9945FF" stop-opacity="0.12"/>
+      <stop offset="60%" stop-color="#14F195" stop-opacity="0.03"/>
+      <stop offset="100%" stop-opacity="0"/>
     </radialGradient>
-    <filter id="glow8" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="b"/>
-      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter>
-    <filter id="bigGlow" x="-30%" y="-30%" width="160%" height="160%">
-      <feGaussianBlur stdDeviation="12"/>
-    </filter>
   </defs>
 
-  <!-- Background -->
-  <rect width="1000" height="1000" rx="200" fill="url(#bg)"/>
-  <rect width="1000" height="1000" rx="200" fill="url(#aura)"/>
+  <!-- BG -->
+  <rect width="1000" height="1000" rx="180" fill="url(#bg)"/>
+  <rect width="1000" height="1000" rx="180" fill="url(#aura)"/>
+  <rect x="6" y="6" width="988" height="988" rx="176" fill="none" stroke="url(#sol)" stroke-width="3" opacity="0.3"/>
 
-  <!-- Outer ring -->
-  <rect x="8" y="8" width="984" height="984" rx="196" fill="none" stroke="url(#sol)" stroke-width="4" opacity="0.35"/>
+  <!-- pixel = 12x12 grid -->
 
-  <!-- 8-BIT PIXEL GRID: each "pixel" is 25x25 units -->
-  <!-- Grid origin at (100, 60) — 32x36 pixel canvas -->
+  <!-- ════════ HAT TIP ════════ -->
+  <!-- Row: tip-top sparkle -->
+  <rect x="486" y="36" width="12" height="12" fill="#B0FFE0"/>
+  <rect x="498" y="36" width="12" height="12" fill="#EEFFEE"/>
+  <rect x="486" y="48" width="24" height="12" fill="#80FFD0"/>
 
-  <!-- ═══ HAT TIP (top, narrow) ═══ -->
-  <!-- Row 0-1: tip sparkle -->
-  <rect x="475" y="35" width="50" height="25" fill="#14F195" filter="url(#glow8)"/>
+  <!-- Tip narrow rows -->
+  <rect x="474" y="60" width="48" height="12" fill="#14F195"/>
+  <rect x="462" y="72" width="72" height="12" fill="#14F195"/>
+  <rect x="450" y="84" width="96" height="12" fill="#1AE88C"/>
+  <rect x="438" y="96" width="120" height="12" fill="#20DE83"/>
+  <rect x="426" y="108" width="144" height="12" fill="#28D47A"/>
+  <rect x="414" y="120" width="168" height="12" fill="#30CA72"/>
+  <rect x="402" y="132" width="192" height="12" fill="#38C06A"/>
+  <rect x="390" y="144" width="216" height="12" fill="#40B662"/>
+  <rect x="378" y="156" width="240" height="12" fill="#48AC5A"/>
+  <rect x="366" y="168" width="264" height="12" fill="#50A252"/>
 
-  <!-- Row 2: tip -->
-  <rect x="450" y="60" width="100" height="25" fill="#14F195"/>
-
-  <!-- Row 3 -->
-  <rect x="425" y="85" width="150" height="25" fill="#14F195"/>
-
-  <!-- Row 4 -->
-  <rect x="400" y="110" width="200" height="25" fill="#30E885"/>
-
-  <!-- Row 5 -->
-  <rect x="375" y="135" width="250" height="25" fill="#4CDB76"/>
-
-  <!-- Row 6 -->
-  <rect x="350" y="160" width="300" height="25" fill="#68CE67"/>
-
-  <!-- Row 7 — star row -->
-  <rect x="325" y="185" width="350" height="25" fill="#7AC45C"/>
-  <!-- Star pixel -->
-  <rect x="475" y="185" width="50" height="25" fill="#FFFFFF" filter="url(#glow8)"/>
-
-  <!-- Row 8 -->
-  <rect x="300" y="210" width="400" height="25" fill="#8CB953"/>
-
-  <!-- Row 9 — star arms -->
-  <rect x="275" y="235" width="450" height="25" fill="#9945FF"/>
-  <!-- Star cross -->
-  <rect x="450" y="235" width="100" height="25" fill="#14F195" filter="url(#glow8)"/>
-
-  <!-- Row 10 -->
-  <rect x="250" y="260" width="500" height="25" fill="#9945FF"/>
+  <!-- Star on hat — 16-bit detailed -->
+  <!-- Star top point -->
+  <rect x="486" y="156" width="24" height="12" fill="#FFFFFF"/>
+  <!-- Star upper arms -->
+  <rect x="474" y="168" width="48" height="12" fill="#E0FFF0"/>
+  <rect x="450" y="180" width="12" height="12" fill="#14F195"/>
+  <rect x="462" y="180" width="72" height="12" fill="#CCFFEE"/>
+  <rect x="534" y="180" width="12" height="12" fill="#14F195"/>
+  <!-- Star wide row -->
+  <rect x="438" y="192" width="120" height="12" fill="#14F195"/>
+  <rect x="462" y="192" width="72" height="12" fill="#E0FFF8"/>
   <!-- Star center -->
-  <rect x="475" y="260" width="50" height="25" fill="#FFFFFF" filter="url(#glow8)"/>
+  <rect x="474" y="204" width="48" height="12" fill="#FFFFFF"/>
+  <rect x="462" y="204" width="12" height="12" fill="#80FFD0"/>
+  <rect x="522" y="204" width="12" height="12" fill="#80FFD0"/>
+  <!-- Star lower arms -->
+  <rect x="450" y="216" width="96" height="12" fill="#14F195"/>
+  <rect x="474" y="216" width="48" height="12" fill="#CCFFEE"/>
+  <!-- Star bottom points -->
+  <rect x="438" y="228" width="36" height="12" fill="#14F195"/>
+  <rect x="522" y="228" width="36" height="12" fill="#14F195"/>
+  <rect x="438" y="240" width="12" height="12" fill="#14F195" opacity="0.6"/>
+  <rect x="546" y="240" width="12" height="12" fill="#14F195" opacity="0.6"/>
 
-  <!-- Row 11 — star arms -->
-  <rect x="250" y="285" width="500" height="25" fill="#9945FF"/>
-  <rect x="450" y="285" width="100" height="25" fill="#14F195" filter="url(#glow8)"/>
+  <!-- Continue hat body below star -->
+  <rect x="354" y="180" width="96" height="12" fill="#589848"/>
+  <rect x="546" y="180" width="96" height="12" fill="#589848"/>
 
-  <!-- Row 12 -->
-  <rect x="225" y="310" width="550" height="25" fill="#8B3AEE"/>
+  <rect x="342" y="192" width="96" height="12" fill="#609040"/>
+  <rect x="558" y="192" width="96" height="12" fill="#609040"/>
 
-  <!-- Row 13 — star bottom -->
-  <rect x="225" y="335" width="550" height="25" fill="#7B2FCC"/>
-  <rect x="475" y="335" width="50" height="25" fill="#14F195" filter="url(#glow8)" opacity="0.7"/>
+  <rect x="330" y="204" width="132" height="12" fill="#688838"/>
+  <rect x="534" y="204" width="132" height="12" fill="#688838"/>
 
-  <!-- Row 14 -->
-  <rect x="200" y="360" width="600" height="25" fill="#7B2FCC"/>
+  <rect x="318" y="216" width="132" height="12" fill="#708030"/>
+  <rect x="546" y="216" width="120" height="12" fill="#708030"/>
 
-  <!-- Row 15 -->
-  <rect x="200" y="385" width="600" height="25" fill="#6B25BB"/>
+  <!-- Full width hat rows -->
+  <rect x="306" y="228" width="384" height="12" fill="#787828"/>
+  <rect x="294" y="240" width="408" height="12" fill="#7B6B2A"/>
+  <rect x="282" y="252" width="432" height="12" fill="#7E5E2C"/>
+  <rect x="270" y="264" width="456" height="12" fill="#81512E"/>
+  <rect x="258" y="276" width="480" height="12" fill="#844430"/>
+  <rect x="258" y="288" width="480" height="12" fill="#873732"/>
 
-  <!-- ═══ HAT BAND ═══ -->
-  <!-- Row 16 -->
-  <rect x="200" y="410" width="600" height="25" fill="#14F195"/>
-  <rect x="200" y="410" width="150" height="25" fill="#9945FF"/>
-  <rect x="650" y="410" width="150" height="25" fill="#9945FF"/>
+  <!-- Purple zone -->
+  <rect x="246" y="300" width="504" height="12" fill="#8A2A34"/>
+  <rect x="246" y="312" width="504" height="12" fill="#8C2C48"/>
+  <rect x="234" y="324" width="528" height="12" fill="#8E2E5C"/>
+  <rect x="234" y="336" width="528" height="12" fill="#902F70"/>
+  <rect x="222" y="348" width="552" height="12" fill="#923184"/>
+  <rect x="222" y="360" width="552" height="12" fill="#943398"/>
+  <rect x="222" y="372" width="552" height="12" fill="#9640A8"/>
+  <rect x="222" y="384" width="552" height="12" fill="#9945C0"/>
+  <rect x="222" y="396" width="552" height="12" fill="#9945E0"/>
+  <rect x="222" y="408" width="552" height="12" fill="#9945FF"/>
 
-  <!-- ═══ HAT BRIM ═══ -->
-  <!-- Row 17 -->
-  <rect x="125" y="435" width="750" height="25" fill="#9945FF"/>
-  <!-- Row 18 -->
-  <rect x="100" y="460" width="800" height="25" fill="#7B2FCC"/>
+  <!-- Left shadow on hat -->
+  <rect x="222" y="300" width="60" height="120" fill="#000000" opacity="0.15"/>
+  <rect x="234" y="324" width="48" height="96" fill="#000000" opacity="0.1"/>
+
+  <!-- ════════ HAT BAND ════════ -->
+  <rect x="210" y="420" width="576" height="12" fill="#14F195"/>
+  <rect x="210" y="432" width="576" height="12" fill="#10D880"/>
+  <!-- Band detail pixels -->
+  <rect x="210" y="420" width="48" height="12" fill="#9945FF"/>
+  <rect x="270" y="420" width="12" height="12" fill="#60E0A0"/>
+  <rect x="390" y="420" width="12" height="12" fill="#FFFFFF" opacity="0.4"/>
+  <rect x="510" y="420" width="12" height="12" fill="#FFFFFF" opacity="0.4"/>
+  <rect x="630" y="420" width="12" height="12" fill="#60E0A0"/>
+  <rect x="738" y="420" width="48" height="12" fill="#9945FF"/>
+
+  <!-- ════════ HAT BRIM ════════ -->
+  <rect x="138" y="444" width="720" height="12" fill="#9945FF"/>
+  <rect x="126" y="456" width="744" height="12" fill="#8B3AEE"/>
+  <rect x="114" y="468" width="768" height="12" fill="#7E2FDD"/>
+  <rect x="126" y="480" width="744" height="12" fill="#7028CC"/>
   <!-- Brim highlight -->
-  <rect x="150" y="435" width="700" height="5" fill="#14F195" opacity="0.3"/>
+  <rect x="162" y="444" width="672" height="4" fill="#14F195" opacity="0.2"/>
+  <!-- Brim edge shadow -->
+  <rect x="138" y="488" width="720" height="6" fill="#000000" opacity="0.2"/>
 
-  <!-- ═══ FACE ═══ -->
-  <!-- Row 19: forehead -->
-  <rect x="275" y="485" width="450" height="25" fill="url(#skin)"/>
+  <!-- ════════ FACE ════════ -->
+  <!-- Forehead -->
+  <rect x="282" y="494" width="432" height="12" fill="#FFD8A8"/>
+  <rect x="270" y="506" width="456" height="12" fill="#FFD4A0"/>
+  <rect x="258" y="518" width="480" height="12" fill="#FFD098"/>
 
-  <!-- Row 20: forehead -->
-  <rect x="250" y="510" width="500" height="25" fill="#FFCEA0"/>
+  <!-- Eyebrows — bushy, grey-white -->
+  <rect x="294" y="530" width="108" height="12" fill="#D0D0D0"/>
+  <rect x="282" y="530" width="12" height="12" fill="#B8B8B8"/>
+  <rect x="402" y="530" width="12" height="12" fill="#B8B8B8"/>
+  <rect x="582" y="530" width="108" height="12" fill="#D0D0D0"/>
+  <rect x="570" y="530" width="12" height="12" fill="#B8B8B8"/>
+  <rect x="690" y="530" width="12" height="12" fill="#B8B8B8"/>
+  <!-- Brow ridge skin -->
+  <rect x="258" y="530" width="24" height="12" fill="#FFC890"/>
+  <rect x="414" y="530" width="168" height="12" fill="#FFC890"/>
+  <rect x="702" y="530" width="36" height="12" fill="#FFC890"/>
 
-  <!-- Row 21: eyes row -->
-  <rect x="250" y="535" width="500" height="25" fill="#FFCEA0"/>
-  <!-- Left eye -->
-  <rect x="325" y="535" width="75" height="25" fill="#000000"/>
-  <rect x="350" y="535" width="25" height="25" fill="#14F195" filter="url(#glow8)"/>
-  <!-- Right eye -->
-  <rect x="575" y="535" width="75" height="25" fill="#000000"/>
-  <rect x="600" y="535" width="25" height="25" fill="#14F195" filter="url(#glow8)"/>
+  <!-- Eyes row -->
+  <rect x="258" y="542" width="480" height="12" fill="#FFC488"/>
+  <!-- Left eye: white, iris, pupil -->
+  <rect x="306" y="542" width="84" height="24" fill="#FFFFFF"/>
+  <rect x="342" y="542" width="36" height="24" fill="#14F195"/>
+  <rect x="354" y="542" width="12" height="24" fill="#0A8050"/>
+  <rect x="354" y="548" width="12" height="12" fill="#000000"/>
+  <!-- Left eye highlight -->
+  <rect x="366" y="542" width="6" height="6" fill="#FFFFFF"/>
+  <!-- Right eye: white, iris, pupil -->
+  <rect x="594" y="542" width="84" height="24" fill="#FFFFFF"/>
+  <rect x="618" y="542" width="36" height="24" fill="#14F195"/>
+  <rect x="630" y="542" width="12" height="24" fill="#0A8050"/>
+  <rect x="630" y="548" width="12" height="12" fill="#000000"/>
+  <!-- Right eye highlight -->
+  <rect x="642" y="542" width="6" height="6" fill="#FFFFFF"/>
 
-  <!-- Row 22: under eyes -->
-  <rect x="250" y="560" width="500" height="25" fill="#F0BA85"/>
+  <!-- Under eyes -->
+  <rect x="258" y="566" width="480" height="12" fill="#FFC080"/>
+  <rect x="306" y="566" width="84" height="6" fill="#FFB070"/>
+  <rect x="594" y="566" width="84" height="6" fill="#FFB070"/>
 
-  <!-- Row 23: nose -->
-  <rect x="250" y="585" width="500" height="25" fill="#F0BA85"/>
-  <rect x="475" y="585" width="50" height="25" fill="#E8A870"/>
+  <!-- Nose area -->
+  <rect x="258" y="578" width="480" height="12" fill="#FFBC78"/>
+  <rect x="258" y="590" width="480" height="12" fill="#FFB870"/>
+  <!-- Nose pixels -->
+  <rect x="474" y="578" width="48" height="24" fill="#EEAA60"/>
+  <rect x="486" y="578" width="24" height="12" fill="#E0A058"/>
+  <!-- Nose highlight -->
+  <rect x="486" y="578" width="6" height="6" fill="#FFD0A0"/>
+  <!-- Nostrils -->
+  <rect x="474" y="596" width="12" height="6" fill="#CC8848"/>
+  <rect x="510" y="596" width="12" height="6" fill="#CC8848"/>
 
-  <!-- Row 24: upper lip / mustache -->
-  <rect x="275" y="610" width="450" height="25" fill="#E0E0E0"/>
-  <rect x="275" y="610" width="75" height="25" fill="#D0D0D0"/>
-  <rect x="650" y="610" width="75" height="25" fill="#D0D0D0"/>
+  <!-- ════════ MUSTACHE ════════ -->
+  <rect x="270" y="602" width="456" height="12" fill="#FFB468"/>
+  <!-- Mustache overlay -->
+  <rect x="318" y="602" width="360" height="12" fill="#E8E8E8"/>
+  <rect x="330" y="602" width="48" height="12" fill="#D8D8D8"/>
+  <rect x="618" y="602" width="48" height="12" fill="#D8D8D8"/>
+  <!-- Mustache curl ends -->
+  <rect x="306" y="602" width="24" height="12" fill="#D0D0D0"/>
+  <rect x="294" y="608" width="24" height="12" fill="#C8C8C8"/>
+  <rect x="666" y="602" width="24" height="12" fill="#D0D0D0"/>
+  <rect x="678" y="608" width="24" height="12" fill="#C8C8C8"/>
+  <!-- Mustache gap for mouth -->
+  <rect x="462" y="602" width="72" height="12" fill="#FFB468"/>
 
-  <!-- ═══ BEARD ═══ -->
-  <!-- Row 25 -->
-  <rect x="275" y="635" width="450" height="25" fill="#E8E8E8"/>
-  <!-- Mouth -->
-  <rect x="425" y="635" width="150" height="25" fill="#CC4444"/>
+  <!-- ════════ MOUTH ════════ -->
+  <rect x="282" y="614" width="432" height="12" fill="#E8E8E8"/>
+  <!-- Mouth opening -->
+  <rect x="438" y="614" width="120" height="12" fill="#BB3333"/>
+  <rect x="450" y="614" width="96" height="6" fill="#992222"/>
+  <!-- Teeth hint -->
+  <rect x="462" y="614" width="12" height="4" fill="#FFFFFF"/>
+  <rect x="486" y="614" width="12" height="4" fill="#FFFFFF"/>
+  <rect x="510" y="614" width="12" height="4" fill="#FFFFFF"/>
+  <rect x="534" y="614" width="12" height="4" fill="#FFFFFF"/>
 
-  <!-- Row 26 -->
-  <rect x="250" y="660" width="500" height="25" fill="#E0E0E0"/>
+  <!-- ════════ BEARD ════════ -->
+  <rect x="282" y="626" width="432" height="12" fill="#E0E0E0"/>
+  <rect x="270" y="638" width="456" height="12" fill="#DCDCDC"/>
+  <rect x="258" y="650" width="480" height="12" fill="#D6D6D6"/>
+  <rect x="258" y="662" width="480" height="12" fill="#D0D0D0"/>
+  <rect x="270" y="674" width="456" height="12" fill="#CACACA"/>
+  <rect x="282" y="686" width="432" height="12" fill="#C4C4C4"/>
+  <rect x="294" y="698" width="408" height="12" fill="#BEBEBE"/>
+  <rect x="306" y="710" width="384" height="12" fill="#B8B8B8"/>
+  <rect x="318" y="722" width="360" height="12" fill="#B2B2B2"/>
+  <rect x="342" y="734" width="312" height="12" fill="#ACACAC"/>
+  <rect x="366" y="746" width="264" height="12" fill="#A6A6A6"/>
+  <rect x="390" y="758" width="216" height="12" fill="#A0A0A0"/>
+  <rect x="414" y="770" width="168" height="12" fill="#9A9A9A"/>
+  <rect x="438" y="782" width="120" height="12" fill="#949494"/>
+  <rect x="462" y="794" width="72" height="12" fill="#8E8E8E"/>
+  <rect x="482" y="806" width="32" height="12" fill="#888888"/>
 
-  <!-- Row 27 -->
-  <rect x="250" y="685" width="500" height="25" fill="#D0D0D0"/>
+  <!-- Beard texture — lighter streaks -->
+  <rect x="330" y="650" width="12" height="60" fill="#E8E8E8" opacity="0.4"/>
+  <rect x="402" y="638" width="12" height="72" fill="#EAEAEA" opacity="0.3"/>
+  <rect x="498" y="626" width="12" height="84" fill="#ECECEC" opacity="0.3"/>
+  <rect x="570" y="638" width="12" height="72" fill="#EAEAEA" opacity="0.3"/>
+  <rect x="642" y="650" width="12" height="48" fill="#E8E8E8" opacity="0.3"/>
 
-  <!-- Row 28 -->
-  <rect x="275" y="710" width="450" height="25" fill="#C0C0C0"/>
+  <!-- Beard shadow (depth) -->
+  <rect x="258" y="650" width="24" height="36" fill="#000000" opacity="0.08"/>
+  <rect x="714" y="650" width="24" height="24" fill="#000000" opacity="0.08"/>
 
-  <!-- Row 29 -->
-  <rect x="300" y="735" width="400" height="25" fill="#B0B0B0"/>
-
-  <!-- Row 30: beard point -->
-  <rect x="350" y="760" width="300" height="25" fill="#A8A8A8"/>
-
-  <!-- Row 31: beard tip -->
-  <rect x="400" y="785" width="200" height="25" fill="#A0A0A0"/>
-
-  <!-- Row 32 -->
-  <rect x="450" y="810" width="100" height="25" fill="#989898"/>
-
-  <!-- ═══ ROBE (shoulders visible) ═══ -->
+  <!-- ════════ ROBE / SHOULDERS ════════ -->
   <!-- Left shoulder -->
-  <rect x="125" y="660" width="125" height="25" fill="#6B25BB"/>
-  <rect x="100" y="685" width="150" height="75" fill="#6B25BB"/>
+  <rect x="138" y="650" width="120" height="12" fill="#7B2FCC"/>
+  <rect x="114" y="662" width="144" height="12" fill="#7028BB"/>
+  <rect x="102" y="674" width="156" height="84" fill="#6520AA"/>
+  <!-- Left shoulder highlight -->
+  <rect x="138" y="650" width="12" height="96" fill="#8838DD" opacity="0.4"/>
 
   <!-- Right shoulder -->
-  <rect x="750" y="660" width="125" height="25" fill="#6B25BB"/>
-  <rect x="750" y="685" width="150" height="75" fill="#6B25BB"/>
+  <rect x="738" y="650" width="120" height="12" fill="#7B2FCC"/>
+  <rect x="738" y="662" width="144" height="12" fill="#7028BB"/>
+  <rect x="738" y="674" width="156" height="84" fill="#6520AA"/>
+  <!-- Right shoulder highlight -->
+  <rect x="846" y="650" width="12" height="96" fill="#8838DD" opacity="0.4"/>
 
-  <!-- Robe collar gradient pixels -->
-  <rect x="200" y="660" width="50" height="50" fill="#7B2FCC"/>
-  <rect x="750" y="660" width="50" height="50" fill="#7B2FCC"/>
+  <!-- Collar detail -->
+  <rect x="222" y="650" width="36" height="24" fill="#8838DD"/>
+  <rect x="738" y="650" width="36" height="24" fill="#8838DD"/>
 
-  <!-- ═══ SPARKLE EFFECTS ═══ -->
-  <g filter="url(#glow8)">
-    <!-- Floating sparkles around wizard -->
-    <rect x="150" y="200" width="15" height="15" fill="#14F195" opacity="0.8">
-      <animate attributeName="opacity" values="0.8;0.1;0.8" dur="2s" repeatCount="indefinite"/>
-    </rect>
-    <rect x="825" y="175" width="12" height="12" fill="#9945FF" opacity="0.7">
-      <animate attributeName="opacity" values="0.2;0.8;0.2" dur="1.6s" repeatCount="indefinite"/>
-    </rect>
-    <rect x="125" y="450" width="10" height="10" fill="#14F195" opacity="0.6">
-      <animate attributeName="opacity" values="0.6;0;0.6" dur="2.5s" repeatCount="indefinite"/>
-    </rect>
-    <rect x="860" y="420" width="12" height="12" fill="#9945FF" opacity="0.5">
-      <animate attributeName="opacity" values="0.1;0.7;0.1" dur="1.8s" repeatCount="indefinite"/>
-    </rect>
-    <rect x="175" y="600" width="8" height="8" fill="#FFFFFF" opacity="0.4">
-      <animate attributeName="opacity" values="0.4;0;0.4" dur="3s" repeatCount="indefinite"/>
-    </rect>
-    <rect x="825" y="580" width="10" height="10" fill="#14F195" opacity="0.5">
-      <animate attributeName="opacity" values="0;0.6;0" dur="2.2s" repeatCount="indefinite"/>
-    </rect>
+  <!-- Robe gradient accents -->
+  <rect x="102" y="746" width="156" height="6" fill="#14F195" opacity="0.15"/>
+  <rect x="738" y="746" width="156" height="6" fill="#14F195" opacity="0.15"/>
 
-    <!-- Tip sparkle -->
-    <rect x="462" y="20" width="12" height="12" fill="#FFFFFF" opacity="0.7">
-      <animate attributeName="y" values="20;8;20" dur="2s" repeatCount="indefinite"/>
-      <animate attributeName="opacity" values="0.7;0;0.7" dur="2s" repeatCount="indefinite"/>
-    </rect>
-    <rect x="510" y="12" width="8" height="8" fill="#14F195" opacity="0.5">
-      <animate attributeName="y" values="12;0;12" dur="2.8s" repeatCount="indefinite"/>
-      <animate attributeName="opacity" values="0.5;0;0.5" dur="2.8s" repeatCount="indefinite"/>
-    </rect>
-  </g>
+  <!-- ════════ SPARKLES (static, no animation) ════════ -->
+  <!-- Large sparkle left -->
+  <rect x="162" y="228" width="6" height="18" fill="#14F195" opacity="0.7"/>
+  <rect x="156" y="234" width="18" height="6" fill="#14F195" opacity="0.7"/>
 
-  <!-- ═══ EYEBROW ACCENTS (bushy, 8-bit) ═══ -->
-  <rect x="300" y="520" width="100" height="8" fill="#C0C0C0"/>
-  <rect x="575" y="520" width="100" height="8" fill="#C0C0C0"/>
+  <!-- Large sparkle right -->
+  <rect x="822" y="192" width="6" height="18" fill="#9945FF" opacity="0.6"/>
+  <rect x="816" y="198" width="18" height="6" fill="#9945FF" opacity="0.6"/>
+
+  <!-- Medium sparkles -->
+  <rect x="132" y="480" width="4" height="12" fill="#14F195" opacity="0.5"/>
+  <rect x="128" y="484" width="12" height="4" fill="#14F195" opacity="0.5"/>
+
+  <rect x="858" y="444" width="4" height="12" fill="#9945FF" opacity="0.5"/>
+  <rect x="854" y="448" width="12" height="4" fill="#9945FF" opacity="0.5"/>
+
+  <!-- Small dot sparkles -->
+  <rect x="186" y="360" width="8" height="8" fill="#14F195" opacity="0.4"/>
+  <rect x="798" y="330" width="8" height="8" fill="#9945FF" opacity="0.4"/>
+  <rect x="150" y="600" width="6" height="6" fill="#FFFFFF" opacity="0.3"/>
+  <rect x="840" y="570" width="6" height="6" fill="#14F195" opacity="0.3"/>
+  <rect x="174" y="150" width="6" height="6" fill="#9945FF" opacity="0.3"/>
+  <rect x="810" y="120" width="6" height="6" fill="#14F195" opacity="0.35"/>
+
+  <!-- Tip sparkle (static cross) -->
+  <rect x="492" y="18" width="12" height="18" fill="#FFFFFF" opacity="0.6"/>
+  <rect x="486" y="24" width="24" height="6" fill="#FFFFFF" opacity="0.6"/>
 </svg>
