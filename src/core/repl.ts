@@ -136,18 +136,33 @@ function formatToolResult(result: string, name: string): string {
 
 // ─── ASCII Art Logo ────────────────────────────────────────────────
 
+function gradientText(text: string, colors: string[]): string {
+  const chars = [...text]
+  return chars.map((ch, i) => {
+    const colorIdx = Math.floor((i / chars.length) * colors.length)
+    const color = colors[Math.min(colorIdx, colors.length - 1)]
+    return chalk.hex(color)(ch)
+  }).join('')
+}
+
 function printBanner(modelName: string, network: string, yolo: boolean, toolCount: number) {
-  const g1 = chalk.hex('#7B2FFF')  // violet
-  const g2 = chalk.hex('#39FF14')  // green
-  const g3 = chalk.hex('#9945FF')  // solana purple
+  const v = chalk.hex('#7B2FFF')   // violet
+  const p = chalk.hex('#9945FF')   // purple
+  const g = chalk.hex('#39FF14')   // green
+  const c = chalk.hex('#00E5FF')   // cyan
   const dim = chalk.dim
+  const colors = ['#7B2FFF', '#8B3AFF', '#9945FF', '#39FF14', '#39FF14', '#00E5FF', '#00E5FF']
 
   console.log()
-  console.log(g1('  ╦ ╦') + g2('┬┌─┐') + g3('┌─┐┬─┐┌┬┐'))
-  console.log(g1('  ║║║') + g2('│┌─┘') + g3('├─┤├┬┘ ││'))
-  console.log(g1('  ╚╩╝') + g2('┴└─┘') + g3('┴ ┴┴└──┴┘'))
+  console.log(v('  ██╗    ') + p('██╗██╗') + g('███████╗') + g('█████╗ ') + c('██████╗ ') + c('██████╗ '))
+  console.log(v('  ██║    ') + p('██║██║') + g('╚══███╔╝') + g('██╔══██╗') + c('██╔══██╗') + c('██╔══██╗'))
+  console.log(v('  ██║ █╗ ') + p('██║██║') + g('  ███╔╝ ') + g('███████║') + c('██████╔╝') + c('██║  ██║'))
+  console.log(v('  ██║███╗') + p('██║██║') + g(' ███╔╝  ') + g('██╔══██║') + c('██╔══██╗') + c('██║  ██║'))
+  console.log(v('  ╚███╔██') + p('██╔╝██║') + g('███████╗') + g('██║  ██║') + c('██║  ██║') + c('██████╔╝'))
+  console.log(v('   ╚══╝╚') + p('══╝ ╚═╝') + g('╚══════╝') + g('╚═╝  ╚═╝') + c('╚═╝  ╚═╝') + c('╚═════╝ '))
   console.log()
-  console.log(dim('  ') + chalk.bold.white('Wizard CLI') + dim(` v${CLI_VERSION}`) + dim(' — AI-powered Solana & Mythic L2 agent'))
+  console.log('  ' + gradientText('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', colors))
+  console.log(dim('  ') + chalk.bold.white('Wizard CLI') + dim(` v${CLI_VERSION}`) + dim(' — AI-powered blockchain development agent'))
   console.log()
 
   // Status line like Claude Code
