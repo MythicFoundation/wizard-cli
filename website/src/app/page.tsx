@@ -1,9 +1,60 @@
+'use client'
+
 import Image from 'next/image'
+import { useState } from 'react'
 import { FaGithub, FaXTwitter, FaTelegram } from 'react-icons/fa6'
+
+const PUMPFUN_URL = 'https://pump.fun/coin/4YuHH45nwtXcsDdRiHMgZmr4EEXcPygoyhY9qySwpump'
+const CA = '4YuHH45nwtXcsDdRiHMgZmr4EEXcPygoyhY9qySwpump'
+
+function TopBanner() {
+  return (
+    <div className="fixed top-0 left-0 right-0 z-[60] sol-gradient-bg">
+      <div className="max-w-[1280px] mx-auto px-5 sm:px-10 h-10 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <span className="w-2 h-2 bg-white animate-pulse flex-shrink-0" />
+          <span className="font-mono text-[0.65rem] sm:text-[0.75rem] text-black font-bold tracking-wide">
+            $WIZCLI IS LIVE ON PUMPFUN
+          </span>
+        </div>
+        <a href={PUMPFUN_URL} target="_blank" rel="noopener"
+          className="px-4 py-1 bg-black text-white font-mono text-[0.6rem] sm:text-[0.7rem] font-bold tracking-[0.06em] hover:bg-black/80 transition-colors flex-shrink-0">
+          BUY NOW
+        </a>
+      </div>
+    </div>
+  )
+}
+
+function CopyCA() {
+  const [copied, setCopied] = useState(false)
+  const handleCopy = () => {
+    navigator.clipboard.writeText(CA)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+  return (
+    <div className="flex items-center gap-2 px-3 py-2 bg-wiz-bg-1 border border-white/[0.08] max-w-max">
+      <span className="font-mono text-[0.55rem] sm:text-[0.65rem] text-wiz-text-dim">CA:</span>
+      <code className="font-mono text-[0.5rem] sm:text-[0.6rem] text-wiz-green select-all">{CA}</code>
+      <button onClick={handleCopy}
+        className="ml-1 px-2 py-0.5 border border-white/[0.08] hover:border-wiz-green/40 hover:bg-wiz-green/[0.05] transition-colors"
+        title="Copy CA">
+        {copied ? (
+          <span className="font-mono text-[0.55rem] text-wiz-green">Copied</span>
+        ) : (
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-wiz-text-dim">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+          </svg>
+        )}
+      </button>
+    </div>
+  )
+}
 
 function Navbar() {
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-xl border-b border-white/[0.06]">
+    <nav className="fixed top-10 left-0 right-0 z-50 bg-black/80 backdrop-blur-xl border-b border-white/[0.06]">
       <div className="max-w-[1280px] mx-auto px-5 sm:px-10 h-14 flex items-center justify-between">
         <a href="/" className="flex items-center gap-3">
           <Image src="/wizard-logo.png" alt="Wizard CLI" width={32} height={32} className="w-8 h-8" />
@@ -47,7 +98,7 @@ function Hero() {
       <div className="absolute top-[20%] left-[15%] w-[400px] h-[400px] bg-wiz-purple/10 blur-[120px]" />
       <div className="absolute bottom-[20%] right-[15%] w-[350px] h-[350px] bg-wiz-green/8 blur-[100px]" />
 
-      <div className="relative max-w-[1280px] mx-auto px-5 sm:px-10 pt-20 pb-16">
+      <div className="relative max-w-[1280px] mx-auto px-5 sm:px-10 pt-28 pb-16">
         <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
           {/* Left: Text */}
           <div className="flex-1 text-center lg:text-left">
@@ -86,17 +137,22 @@ function Hero() {
             </div>
 
             {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row items-center gap-3 justify-center lg:justify-start">
-              <a href="https://github.com/MythicFoundation/wizard-cli" target="_blank" rel="noopener"
+            <div className="flex flex-col sm:flex-row items-center gap-3 justify-center lg:justify-start mb-5">
+              <a href={PUMPFUN_URL} target="_blank" rel="noopener"
                 className="px-7 py-3.5 sol-gradient-bg text-black font-display text-[0.85rem] font-bold tracking-[0.04em] hover:opacity-90 transition-opacity flex items-center gap-2">
+                Buy $WIZCLI
+              </a>
+              <a href="https://github.com/MythicFoundation/wizard-cli" target="_blank" rel="noopener"
+                className="px-7 py-3 border border-white/[0.12] text-white font-display text-[0.8rem] font-semibold tracking-[0.04em] hover:border-white/[0.24] hover:bg-white/[0.03] transition-colors flex items-center gap-2">
                 <FaGithub size={16} />
-                View on GitHub
+                GitHub
               </a>
               <a href="#docs"
                 className="px-7 py-3 border border-white/[0.12] text-white font-display text-[0.8rem] font-semibold tracking-[0.04em] hover:border-white/[0.24] hover:bg-white/[0.03] transition-colors">
-                Read the Docs
+                Docs
               </a>
             </div>
+            <CopyCA />
           </div>
 
           {/* Right: Wizard Image */}
@@ -359,15 +415,26 @@ function Token() {
           </p>
         </div>
 
+        {/* Contract Address */}
+        <div className="mb-8 p-5 border border-wiz-green/20 bg-wiz-green/[0.04]">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <div className="font-mono text-[0.5rem] tracking-[0.15em] uppercase text-wiz-green/60 mb-1">Contract Address</div>
+              <code className="font-mono text-[0.75rem] sm:text-[0.85rem] text-wiz-green select-all break-all">{CA}</code>
+            </div>
+            <CopyCA />
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
           <div className="border border-wiz-purple/20 bg-wiz-purple/[0.04] p-6 text-center">
             <div className="font-display text-[2rem] font-extrabold sol-gradient-text">$WIZCLI</div>
             <div className="font-mono text-[0.55rem] tracking-[0.12em] uppercase text-wiz-text-muted mt-2">Ticker</div>
           </div>
-          <div className="border border-wiz-green/20 bg-wiz-green/[0.04] p-6 text-center">
+          <a href={PUMPFUN_URL} target="_blank" rel="noopener" className="border border-wiz-green/20 bg-wiz-green/[0.04] p-6 text-center hover:bg-wiz-green/[0.08] transition-colors">
             <div className="font-display text-[2rem] font-extrabold text-wiz-green">PumpFun</div>
-            <div className="font-mono text-[0.55rem] tracking-[0.12em] uppercase text-wiz-text-muted mt-2">Launch Platform</div>
-          </div>
+            <div className="font-mono text-[0.55rem] tracking-[0.12em] uppercase text-wiz-text-muted mt-2">Live Now</div>
+          </a>
           <div className="border border-white/[0.08] bg-white/[0.02] p-6 text-center">
             <div className="font-display text-[2rem] font-extrabold text-white">Solana</div>
             <div className="font-mono text-[0.55rem] tracking-[0.12em] uppercase text-wiz-text-muted mt-2">Blockchain</div>
@@ -389,9 +456,9 @@ function Token() {
             </p>
           </div>
           <div className="mt-6 flex flex-col sm:flex-row gap-3">
-            <a href="https://pump.fun" target="_blank" rel="noopener"
+            <a href={PUMPFUN_URL} target="_blank" rel="noopener"
               className="px-7 py-3.5 bg-wiz-green text-black font-display text-[0.85rem] font-bold tracking-[0.04em] hover:bg-[#1AFF9F] transition-colors text-center">
-              Buy on PumpFun
+              Buy $WIZCLI on PumpFun
             </a>
             <a href="https://github.com/MythicFoundation/wizard-cli" target="_blank" rel="noopener"
               className="px-7 py-3 border border-white/[0.12] text-white font-display text-[0.8rem] font-semibold tracking-[0.04em] hover:border-white/[0.24] transition-colors text-center">
@@ -439,6 +506,7 @@ function Footer() {
 export default function Home() {
   return (
     <>
+      <TopBanner />
       <Navbar />
       <Hero />
       <Features />
