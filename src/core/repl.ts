@@ -146,22 +146,45 @@ function gradientText(text: string, colors: string[]): string {
 }
 
 function printBanner(modelName: string, network: string, yolo: boolean, toolCount: number) {
-  const v = chalk.hex('#7B2FFF')   // violet
-  const p = chalk.hex('#9945FF')   // purple
-  const g = chalk.hex('#39FF14')   // green
-  const c = chalk.hex('#00E5FF')   // cyan
+  const v = chalk.hex('#9945FF')   // solana purple
+  const p = chalk.hex('#9945FF')   // solana purple
+  const g = chalk.hex('#14F195')   // solana green
+  const c = chalk.hex('#14F195')   // solana green
   const dim = chalk.dim
-  const colors = ['#7B2FFF', '#8B3AFF', '#9945FF', '#39FF14', '#39FF14', '#00E5FF', '#00E5FF']
+  const colors = ['#9945FF', '#9945FF', '#A86BFF', '#14F195', '#14F195', '#14F195', '#14F195']
 
   console.log()
-  console.log(v('  ██╗    ') + p('██╗██╗') + g('███████╗') + g('█████╗ ') + c('██████╗ ') + c('██████╗ '))
-  console.log(v('  ██║    ') + p('██║██║') + g('╚══███╔╝') + g('██╔══██╗') + c('██╔══██╗') + c('██╔══██╗'))
-  console.log(v('  ██║ █╗ ') + p('██║██║') + g('  ███╔╝ ') + g('███████║') + c('██████╔╝') + c('██║  ██║'))
-  console.log(v('  ██║███╗') + p('██║██║') + g(' ███╔╝  ') + g('██╔══██║') + c('██╔══██╗') + c('██║  ██║'))
-  console.log(v('  ╚███╔██') + p('██╔╝██║') + g('███████╗') + g('██║  ██║') + c('██║  ██║') + c('██████╔╝'))
-  console.log(v('   ╚══╝╚') + p('══╝ ╚═╝') + g('╚══════╝') + g('╚═╝  ╚═╝') + c('╚═╝  ╚═╝') + c('╚═════╝ '))
+  // True gradient: interpolate #9945FF → #14F195 per character across each line
+  function lerpColor(t: number): string {
+    // #9945FF (153,69,255) → #14F195 (20,241,149)
+    const r = Math.round(153 + (20 - 153) * t)
+    const gg = Math.round(69 + (241 - 69) * t)
+    const b = Math.round(255 + (149 - 255) * t)
+    return `#${r.toString(16).padStart(2,'0')}${gg.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`
+  }
+
+  function gradLine(text: string): string {
+    const chars = [...text]
+    return chars.map((ch, i) => {
+      if (ch === ' ') return ch
+      const t = chars.length > 1 ? i / (chars.length - 1) : 0
+      return chalk.hex(lerpColor(t))(ch)
+    }).join('')
+  }
+
+  const art = [
+    '  ██╗    ██╗██╗███████╗█████╗ ██████╗ ██████╗   █████╗ ██╗     ██╗',
+    '  ██║    ██║██║╚══███╔╝██╔══██╗██╔══██╗██╔══██╗ ██╔══██╗██║     ██║',
+    '  ██║ █╗ ██║██║  ███╔╝ ███████║██████╔╝██║  ██║ ██║  ╚═╝██║     ██║',
+    '  ██║███╗██║██║ ███╔╝  ██╔══██║██╔══██╗██║  ██║ ██║  ██╗██║     ██║',
+    '  ╚███╔████╔╝██║███████╗██║  ██║██║  ██║██████╔╝ ╚█████╔╝███████╗██║',
+    '   ╚══╝╚══╝ ╚═╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═════╝   ╚════╝ ╚══════╝╚═╝',
+  ]
+  for (const line of art) {
+    console.log(gradLine(line))
+  }
   console.log()
-  console.log('  ' + gradientText('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', colors))
+  console.log('  ' + gradLine('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'))
   console.log(dim('  ') + chalk.bold.white('Wizard CLI') + dim(` v${CLI_VERSION}`) + dim(' — AI-powered blockchain development agent'))
   console.log()
 
@@ -333,7 +356,7 @@ export async function startRepl(initialPrompt?: string) {
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
-    prompt: chalk.hex('#39FF14').bold('❯ '),
+    prompt: chalk.hex('#14F195').bold('❯ '),
     historySize: 100,
   })
 

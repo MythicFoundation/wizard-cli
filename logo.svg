@@ -1,142 +1,89 @@
 <svg width="1200" height="400" viewBox="0 0 1200 400" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <!-- Main gradient: violet → electric green → cyan -->
     <linearGradient id="mainGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#7B2FFF"/>
+      <stop offset="0%" stop-color="#9945FF"/>
       <stop offset="30%" stop-color="#9945FF"/>
-      <stop offset="55%" stop-color="#39FF14"/>
-      <stop offset="80%" stop-color="#00E5FF"/>
-      <stop offset="100%" stop-color="#39FF14"/>
+      <stop offset="55%" stop-color="#14F195"/>
+      <stop offset="80%" stop-color="#14F195"/>
+      <stop offset="100%" stop-color="#14F195"/>
     </linearGradient>
-
-    <!-- Hot gradient for accents -->
     <linearGradient id="hotGrad" x1="0%" y1="0%" x2="100%" y2="0%">
       <stop offset="0%" stop-color="#FF2D78"/>
       <stop offset="50%" stop-color="#FF9500"/>
-      <stop offset="100%" stop-color="#39FF14"/>
+      <stop offset="100%" stop-color="#14F195"/>
     </linearGradient>
-
-    <!-- Vertical glow for hat -->
     <linearGradient id="hatGrad" x1="0%" y1="100%" x2="0%" y2="0%">
-      <stop offset="0%" stop-color="#7B2FFF"/>
+      <stop offset="0%" stop-color="#9945FF"/>
       <stop offset="40%" stop-color="#9945FF"/>
-      <stop offset="70%" stop-color="#39FF14"/>
-      <stop offset="100%" stop-color="#00E5FF"/>
+      <stop offset="70%" stop-color="#14F195"/>
+      <stop offset="100%" stop-color="#14F195"/>
     </linearGradient>
-
-    <!-- Star gradient -->
     <linearGradient id="starGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#39FF14"/>
+      <stop offset="0%" stop-color="#14F195"/>
       <stop offset="100%" stop-color="#FFFFFF"/>
     </linearGradient>
-
-    <!-- Text shimmer gradient -->
     <linearGradient id="textGrad" x1="0%" y1="0%" x2="100%" y2="0%">
       <stop offset="0%" stop-color="#9945FF"/>
-      <stop offset="25%" stop-color="#39FF14"/>
-      <stop offset="50%" stop-color="#00E5FF"/>
-      <stop offset="75%" stop-color="#39FF14"/>
+      <stop offset="25%" stop-color="#14F195"/>
+      <stop offset="50%" stop-color="#14F195"/>
+      <stop offset="75%" stop-color="#14F195"/>
       <stop offset="100%" stop-color="#9945FF"/>
       <animate attributeName="x1" values="-100%;100%" dur="4s" repeatCount="indefinite"/>
       <animate attributeName="x2" values="0%;200%" dur="4s" repeatCount="indefinite"/>
     </linearGradient>
-
-    <!-- Glow filters -->
+    <linearGradient id="cliGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#14F195" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#14F195" stop-opacity="0.4"/>
+    </linearGradient>
     <filter id="neonGlow" x="-20%" y="-20%" width="140%" height="140%">
       <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur1"/>
       <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="blur2"/>
-      <feMerge>
-        <feMergeNode in="blur1"/>
-        <feMergeNode in="blur2"/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
+      <feMerge><feMergeNode in="blur1"/><feMergeNode in="blur2"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
-
     <filter id="softGlow" x="-30%" y="-30%" width="160%" height="160%">
       <feGaussianBlur stdDeviation="12" result="glow"/>
-      <feMerge>
-        <feMergeNode in="glow"/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
+      <feMerge><feMergeNode in="glow"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
-
     <filter id="hugeGlow" x="-50%" y="-50%" width="200%" height="200%">
       <feGaussianBlur stdDeviation="25" result="glow"/>
       <feComposite in="glow" operator="over"/>
     </filter>
-
-    <!-- Noise texture -->
-    <filter id="noise">
-      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" stitchTiles="stitch"/>
-      <feColorMatrix type="saturate" values="0"/>
-      <feComponentTransfer>
-        <feFuncA type="linear" slope="0.03"/>
-      </feComponentTransfer>
-      <feBlend in="SourceGraphic" mode="overlay"/>
-    </filter>
-
-    <!-- Radial background glow -->
-    <radialGradient id="bgGlow" cx="35%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#7B2FFF" stop-opacity="0.15"/>
-      <stop offset="60%" stop-color="#39FF14" stop-opacity="0.05"/>
+    <radialGradient id="bgGlow" cx="30%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#9945FF" stop-opacity="0.15"/>
+      <stop offset="60%" stop-color="#14F195" stop-opacity="0.05"/>
       <stop offset="100%" stop-color="#0A0A0F" stop-opacity="0"/>
     </radialGradient>
-
-    <radialGradient id="bgGlow2" cx="70%" cy="40%" r="40%">
-      <stop offset="0%" stop-color="#39FF14" stop-opacity="0.08"/>
+    <radialGradient id="bgGlow2" cx="75%" cy="40%" r="40%">
+      <stop offset="0%" stop-color="#14F195" stop-opacity="0.08"/>
       <stop offset="100%" stop-color="#0A0A0F" stop-opacity="0"/>
     </radialGradient>
   </defs>
 
-  <!-- Background -->
   <rect width="1200" height="400" fill="#0A0A0F" rx="16"/>
   <rect width="1200" height="400" fill="url(#bgGlow)" rx="16"/>
   <rect width="1200" height="400" fill="url(#bgGlow2)" rx="16"/>
-
-  <!-- Subtle grid -->
   <pattern id="grid" width="30" height="30" patternUnits="userSpaceOnUse">
     <path d="M 30 0 L 0 0 0 30" fill="none" stroke="#ffffff" stroke-width="0.15" opacity="0.06"/>
   </pattern>
   <rect width="1200" height="400" fill="url(#grid)" rx="16"/>
-
-  <!-- Top accent line with gradient -->
   <rect x="0" y="0" width="1200" height="3" fill="url(#mainGrad)" rx="2" opacity="0.9"/>
 
-  <!-- ═══ WIZARD HAT (Large, centered-left) ═══ -->
-  <g transform="translate(80, 30)">
-    <!-- Hat glow behind -->
-    <path d="M 100 320 L 145 60 Q 155 15 165 60 L 205 250 Q 170 235 150 240 Q 120 235 100 250 Z"
-          fill="#7B2FFF" opacity="0.3" filter="url(#hugeGlow)"/>
-
-    <!-- Hat body -->
-    <path d="M 100 320 L 145 60 Q 155 15 165 60 L 205 250 Q 170 235 150 240 Q 120 235 100 250 Z"
-          fill="url(#hatGrad)" opacity="0.95"/>
-
-    <!-- Hat highlight edge -->
-    <path d="M 145 60 Q 155 15 165 60 L 180 170"
-          fill="none" stroke="url(#starGrad)" stroke-width="1.5" opacity="0.6"/>
-
-    <!-- Hat brim -->
+  <!-- Wizard Hat -->
+  <g transform="translate(60, 30)">
+    <path d="M 100 320 L 145 60 Q 155 15 165 60 L 205 250 Q 170 235 150 240 Q 120 235 100 250 Z" fill="#9945FF" opacity="0.3" filter="url(#hugeGlow)"/>
+    <path d="M 100 320 L 145 60 Q 155 15 165 60 L 205 250 Q 170 235 150 240 Q 120 235 100 250 Z" fill="url(#hatGrad)" opacity="0.95"/>
+    <path d="M 145 60 Q 155 15 165 60 L 180 170" fill="none" stroke="url(#starGrad)" stroke-width="1.5" opacity="0.6"/>
     <ellipse cx="152" cy="318" rx="80" ry="22" fill="url(#mainGrad)" opacity="0.8"/>
-    <ellipse cx="152" cy="316" rx="75" ry="18" fill="none" stroke="#39FF14" stroke-width="0.8" opacity="0.4"/>
-
-    <!-- Hat band -->
+    <ellipse cx="152" cy="316" rx="75" ry="18" fill="none" stroke="#14F195" stroke-width="0.8" opacity="0.4"/>
     <rect x="105" y="275" width="95" height="12" rx="3" fill="url(#hotGrad)" opacity="0.7"/>
-
-    <!-- Main star on hat -->
     <g filter="url(#neonGlow)">
-      <path d="M 152 100 L 158 120 L 178 120 L 162 133 L 168 153 L 152 142 L 136 153 L 142 133 L 126 120 L 146 120 Z"
-            fill="url(#starGrad)" opacity="0.95"/>
+      <path d="M 152 100 L 158 120 L 178 120 L 162 133 L 168 153 L 152 142 L 136 153 L 142 133 L 126 120 L 146 120 Z" fill="url(#starGrad)" opacity="0.95"/>
     </g>
-
-    <!-- Orbiting sparkles -->
-    <circle cx="90" cy="80" r="3" fill="#39FF14" opacity="0.9" filter="url(#neonGlow)">
+    <circle cx="90" cy="80" r="3" fill="#14F195" opacity="0.9" filter="url(#neonGlow)">
       <animate attributeName="opacity" values="0.9;0.2;0.9" dur="2s" repeatCount="indefinite"/>
-      <animate attributeName="cy" values="80;75;80" dur="3s" repeatCount="indefinite"/>
     </circle>
-    <circle cx="215" cy="60" r="2.5" fill="#00E5FF" opacity="0.8" filter="url(#neonGlow)">
+    <circle cx="215" cy="60" r="2.5" fill="#14F195" opacity="0.8" filter="url(#neonGlow)">
       <animate attributeName="opacity" values="0.3;0.9;0.3" dur="1.8s" repeatCount="indefinite"/>
-      <animate attributeName="cx" values="215;220;215" dur="4s" repeatCount="indefinite"/>
     </circle>
     <circle cx="75" cy="180" r="2" fill="#FF2D78" opacity="0.7" filter="url(#neonGlow)">
       <animate attributeName="opacity" values="0.7;0.1;0.7" dur="2.5s" repeatCount="indefinite"/>
@@ -144,77 +91,54 @@
     <circle cx="230" cy="150" r="1.8" fill="#FF9500" opacity="0.6">
       <animate attributeName="opacity" values="0.6;0.15;0.6" dur="3.2s" repeatCount="indefinite"/>
     </circle>
-    <circle cx="120" cy="40" r="1.5" fill="#9945FF" opacity="0.7">
-      <animate attributeName="opacity" values="0.2;0.8;0.2" dur="1.4s" repeatCount="indefinite"/>
-    </circle>
-
-    <!-- Particle trail from hat tip -->
     <circle cx="155" cy="20" r="1.2" fill="#FFFFFF" opacity="0.8">
       <animate attributeName="cy" values="20;10;20" dur="2s" repeatCount="indefinite"/>
       <animate attributeName="opacity" values="0.8;0;0.8" dur="2s" repeatCount="indefinite"/>
     </circle>
-    <circle cx="150" cy="12" r="0.8" fill="#39FF14" opacity="0.5">
-      <animate attributeName="cy" values="12;2;12" dur="2.5s" repeatCount="indefinite"/>
-      <animate attributeName="opacity" values="0.5;0;0.5" dur="2.5s" repeatCount="indefinite"/>
-    </circle>
   </g>
 
-  <!-- ═══ "WIZARD" TEXT ═══ -->
+  <!-- "WIZARD" -->
   <g filter="url(#softGlow)">
-    <text x="340" y="220" font-family="'SF Mono', 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace"
-          font-size="130" font-weight="900" fill="url(#textGrad)" letter-spacing="12"
-          >WIZARD</text>
+    <text x="310" y="195" font-family="'SF Mono','JetBrains Mono','Fira Code',monospace" font-size="110" font-weight="900" fill="url(#textGrad)" letter-spacing="10">WIZARD</text>
   </g>
+  <text x="310" y="195" font-family="'SF Mono','JetBrains Mono','Fira Code',monospace" font-size="110" font-weight="900" fill="none" stroke="url(#mainGrad)" stroke-width="0.5" letter-spacing="10" opacity="0.3">WIZARD</text>
 
-  <!-- Ghost outline of text for depth -->
-  <text x="340" y="220" font-family="'SF Mono', 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace"
-        font-size="130" font-weight="900" fill="none" stroke="url(#mainGrad)" stroke-width="0.5" letter-spacing="12"
-        opacity="0.3">WIZARD</text>
-
-  <!-- "CLI" with different weight -->
-  <text x="940" y="220" font-family="'SF Mono', 'JetBrains Mono', 'Fira Code', monospace"
-        font-size="130" font-weight="200" fill="#FFFFFF" opacity="0.25" letter-spacing="6">CLI</text>
+  <!-- "CLI" same gradient, lighter weight -->
+  <g filter="url(#softGlow)">
+    <text x="870" y="195" font-family="'SF Mono','JetBrains Mono','Fira Code',monospace" font-size="110" font-weight="400" fill="url(#cliGrad)" letter-spacing="8">CLI</text>
+  </g>
 
   <!-- Tagline -->
-  <text x="345" y="270" font-family="'Inter', 'SF Pro Display', 'Segoe UI', sans-serif"
-        font-size="18" fill="url(#mainGrad)" letter-spacing="6" font-weight="500"
-        >AI-POWERED SOLANA &amp; MYTHIC L2 DEVELOPMENT</text>
+  <text x="315" y="240" font-family="'Inter','SF Pro Display',sans-serif" font-size="17" fill="url(#mainGrad)" letter-spacing="5.5" font-weight="500">AI-POWERED SOLANA &amp; MYTHIC L2 DEVELOPMENT</text>
 
   <!-- Underline accents -->
-  <rect x="345" y="290" width="200" height="3" rx="1.5" fill="url(#mainGrad)" opacity="0.8"/>
-  <rect x="555" y="290" width="120" height="3" rx="1.5" fill="url(#hotGrad)" opacity="0.5"/>
-  <rect x="685" y="290" width="60" height="3" rx="1.5" fill="#7B2FFF" opacity="0.3"/>
+  <rect x="315" y="258" width="220" height="3" rx="1.5" fill="url(#mainGrad)" opacity="0.8"/>
+  <rect x="545" y="258" width="130" height="3" rx="1.5" fill="url(#hotGrad)" opacity="0.5"/>
+  <rect x="685" y="258" width="60" height="3" rx="1.5" fill="#9945FF" opacity="0.3"/>
 
   <!-- Feature pills -->
-  <g transform="translate(345, 315)">
-    <rect width="90" height="28" rx="4" fill="#39FF14" opacity="0.1" stroke="#39FF14" stroke-width="0.8" stroke-opacity="0.4"/>
-    <text x="45" y="18" font-family="'SF Mono', monospace" font-size="11" fill="#39FF14" text-anchor="middle" font-weight="600">Claude</text>
-
+  <g transform="translate(315, 285)">
+    <rect width="90" height="28" rx="4" fill="#14F195" opacity="0.1" stroke="#14F195" stroke-width="0.8" stroke-opacity="0.4"/>
+    <text x="45" y="18" font-family="'SF Mono',monospace" font-size="11" fill="#14F195" text-anchor="middle" font-weight="600">Claude</text>
     <rect x="100" width="90" height="28" rx="4" fill="#9945FF" opacity="0.1" stroke="#9945FF" stroke-width="0.8" stroke-opacity="0.4"/>
-    <text x="145" y="18" font-family="'SF Mono', monospace" font-size="11" fill="#9945FF" text-anchor="middle" font-weight="600">Solana</text>
-
-    <rect x="200" width="90" height="28" rx="4" fill="#00E5FF" opacity="0.1" stroke="#00E5FF" stroke-width="0.8" stroke-opacity="0.4"/>
-    <text x="245" y="18" font-family="'SF Mono', monospace" font-size="11" fill="#00E5FF" text-anchor="middle" font-weight="600">OpenAI</text>
-
+    <text x="145" y="18" font-family="'SF Mono',monospace" font-size="11" fill="#9945FF" text-anchor="middle" font-weight="600">Solana</text>
+    <rect x="200" width="90" height="28" rx="4" fill="#14F195" opacity="0.1" stroke="#14F195" stroke-width="0.8" stroke-opacity="0.4"/>
+    <text x="245" y="18" font-family="'SF Mono',monospace" font-size="11" fill="#14F195" text-anchor="middle" font-weight="600">OpenAI</text>
     <rect x="300" width="110" height="28" rx="4" fill="#FF9500" opacity="0.1" stroke="#FF9500" stroke-width="0.8" stroke-opacity="0.4"/>
-    <text x="355" y="18" font-family="'SF Mono', monospace" font-size="11" fill="#FF9500" text-anchor="middle" font-weight="600">Firedancer</text>
-
+    <text x="355" y="18" font-family="'SF Mono',monospace" font-size="11" fill="#FF9500" text-anchor="middle" font-weight="600">Firedancer</text>
     <rect x="420" width="90" height="28" rx="4" fill="#FF2D78" opacity="0.1" stroke="#FF2D78" stroke-width="0.8" stroke-opacity="0.4"/>
-    <text x="465" y="18" font-family="'SF Mono', monospace" font-size="11" fill="#FF2D78" text-anchor="middle" font-weight="600">27 Tools</text>
+    <text x="465" y="18" font-family="'SF Mono',monospace" font-size="11" fill="#FF2D78" text-anchor="middle" font-weight="600">27 Tools</text>
   </g>
 
-  <!-- Version badge (bottom right) -->
+  <!-- Version badge -->
   <g transform="translate(1060, 345)">
-    <rect width="100" height="30" rx="6" fill="#39FF14" opacity="0.08" stroke="#39FF14" stroke-width="1" stroke-opacity="0.3"/>
-    <text x="50" y="20" font-family="'SF Mono', monospace" font-size="14" fill="#39FF14" text-anchor="middle" font-weight="700" opacity="0.8">v0.2.0</text>
+    <rect width="100" height="30" rx="6" fill="#14F195" opacity="0.08" stroke="#14F195" stroke-width="1" stroke-opacity="0.3"/>
+    <text x="50" y="20" font-family="'SF Mono',monospace" font-size="14" fill="#14F195" text-anchor="middle" font-weight="700" opacity="0.8">v0.2.0</text>
   </g>
 
-  <!-- Bottom accent line -->
   <rect x="0" y="397" width="1200" height="3" fill="url(#mainGrad)" rx="2" opacity="0.5"/>
-
-  <!-- Corner decorations -->
-  <path d="M 16 16 L 16 50 M 16 16 L 50 16" stroke="#39FF14" stroke-width="1.5" opacity="0.3"/>
+  <path d="M 16 16 L 16 50 M 16 16 L 50 16" stroke="#14F195" stroke-width="1.5" opacity="0.3"/>
   <path d="M 1184 16 L 1184 50 M 1184 16 L 1150 16" stroke="#9945FF" stroke-width="1.5" opacity="0.3"/>
   <path d="M 16 384 L 16 350 M 16 384 L 50 384" stroke="#9945FF" stroke-width="1.5" opacity="0.3"/>
-  <path d="M 1184 384 L 1184 350 M 1184 384 L 1150 384" stroke="#39FF14" stroke-width="1.5" opacity="0.3"/>
+  <path d="M 1184 384 L 1184 350 M 1184 384 L 1150 384" stroke="#14F195" stroke-width="1.5" opacity="0.3"/>
 </svg>

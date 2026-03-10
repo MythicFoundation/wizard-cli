@@ -1,23 +1,26 @@
 # Wizard CLI
 
-AI-powered development agent for Solana and Mythic L2. Built on Claude. Command: `mythic`.
+AI-powered development agent for Solana and Mythic L2. Built on Claude + OpenAI. Command: `wizard`.
 
 ## Install
 
 ```bash
-npm install -g @mythic/wizard-cli
+curl -sSfL https://mythic.sh/wizard | bash
 ```
 
-Or run directly:
+Or clone manually:
 
 ```bash
-npx @mythic/wizard-cli
+git clone https://github.com/MythicFoundation/wizard-cli.git ~/.wizard-cli
+cd ~/.wizard-cli && npm install && npm run build
+ln -sf ~/.wizard-cli/dist/cli.js ~/.local/bin/wizard
 ```
 
-## Setup
+## Usage
 
 ```bash
-export ANTHROPIC_API_KEY=sk-ant-...
+# Start immediately — 25 free messages/day, no API key needed
+wizard
 mythic
 ```
 
