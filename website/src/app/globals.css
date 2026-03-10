@@ -1,0 +1,80 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --sol-purple: #9945FF;
+  --sol-green: #14F195;
+}
+
+* { border-radius: 0 !important; }
+
+body {
+  background: #000;
+  color: #E0E0E8;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: rgba(153, 69, 255, 0.3);
+  color: #fff;
+}
+
+.grid-overlay {
+  background-image:
+    linear-gradient(rgba(153, 69, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(153, 69, 255, 0.03) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+
+.glass-card {
+  background: rgba(8, 8, 12, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
+
+.sol-gradient-text {
+  background: linear-gradient(135deg, #9945FF 0%, #14F195 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.sol-gradient-bg {
+  background: linear-gradient(135deg, #9945FF 0%, #14F195 100%);
+}
+
+.sol-gradient-border {
+  border-image: linear-gradient(135deg, #9945FF, #14F195) 1;
+}
+
+.glow-green {
+  box-shadow: 0 0 30px rgba(20, 241, 149, 0.15);
+}
+
+.glow-purple {
+  box-shadow: 0 0 30px rgba(153, 69, 255, 0.15);
+}
+
+/* Code block copy highlight */
+pre code {
+  tab-size: 2;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #08080C; }
+::-webkit-scrollbar-thumb { background: #333; }
+::-webkit-scrollbar-thumb:hover { background: #555; }
+
+/* Animate gradient for hero badge */
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+.shimmer {
+  background: linear-gradient(90deg, #9945FF, #14F195, #9945FF);
+  background-size: 200% auto;
+  animation: shimmer 3s linear infinite;
+}
