@@ -4,7 +4,8 @@
   "description": "Wizard CLI — AI-powered Solana & Mythic L2 development CLI",
   "type": "module",
   "bin": {
-    "mythic": "./dist/cli.js"
+    "mythic": "./dist/cli.js",
+    "wizard": "./dist/cli.js"
   },
   "scripts": {
     "build": "tsup src/cli.ts --format esm --dts --clean",
