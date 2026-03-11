@@ -1,7 +1,7 @@
 // Wizard CLI — Constants
 
 export const CLI_NAME = 'wizard'
-export const CLI_VERSION = '0.2.0'
+export const CLI_VERSION = '1.0.0'
 export const CLI_DESCRIPTION = 'Wizard CLI — AI-powered Solana & Mythic L2 development agent'
 
 // ─── Model Registry ────────────────────────────────────────────────
