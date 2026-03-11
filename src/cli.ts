@@ -15,6 +15,50 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 const WIZARD_ROOT = resolve(__dirname, '..')
 
+// ─── Shared init logic ──────────────────────────────────────────
+function scaffoldAgentSetup(cwd: string, options: { force?: boolean; silent?: boolean } = {}): number {
+  const templatesDir = join(WIZARD_ROOT, 'templates')
+
+  if (!existsSync(templatesDir)) {
+    if (!options.silent) console.log(chalk.red('\n  Templates not found. Reinstall wizard-cli.\n'))
+    return -1
+  }
+
+  const files = [
+    { src: 'CLAUDE.md', dest: 'CLAUDE.md' },
+    { src: 'agents/program-engineer.md', dest: '.claude/agents/program-engineer.md' },
+    { src: 'agents/defi-builder.md', dest: '.claude/agents/defi-builder.md' },
+    { src: 'agents/frontend-dev.md', dest: '.claude/agents/frontend-dev.md' },
+    { src: 'skills/build/SKILL.md', dest: '.claude/skills/build/SKILL.md' },
+    { src: 'skills/deploy/SKILL.md', dest: '.claude/skills/deploy/SKILL.md' },
+    { src: 'skills/check-network/SKILL.md', dest: '.claude/skills/check-network/SKILL.md' },
+    { src: 'skills/audit/SKILL.md', dest: '.claude/skills/audit/SKILL.md' },
+    { src: 'skills/new-program/SKILL.md', dest: '.claude/skills/new-program/SKILL.md' },
+    { src: 'settings.local.json', dest: '.claude/settings.local.json' },
+  ]
+
+  let created = 0
+  let skipped = 0
+
+  for (const { src, dest } of files) {
+    const destPath = join(cwd, dest)
+    const destDir = dirname(destPath)
+
+    if (existsSync(destPath) && !options.force) {
+      if (!options.silent) console.log(chalk.dim(`  skip  ${dest}`) + chalk.dim(' (exists, use --force to overwrite)'))
+      skipped++
+      continue
+    }
+
+    mkdirSync(destDir, { recursive: true })
+    cpSync(join(templatesDir, src), destPath)
+    if (!options.silent) console.log(chalk.green(`  create  ${dest}`))
+    created++
+  }
+
+  return created
+}
+
 const program = new Command()
 
 program
@@ -30,6 +74,7 @@ program
   .option('-n, --network <network>', 'Solana network (mainnet-beta, devnet, mythic-l2, etc.)')
   .option('-k, --keypair <path>', 'Path to Solana keypair JSON')
   .option('--rpc <url>', 'Custom RPC URL')
+  .option('--no-init', 'Skip automatic agent setup scaffolding')
   .action(async (promptParts: string[], options) => {
     // Apply CLI options
     if (options.yolo) setConfig('yolo', true)
@@ -45,7 +90,23 @@ program
     if (options.keypair) setConfig('keypairPath', options.keypair)
     if (options.rpc) setConfig('customRpc', options.rpc)
 
-    // API key always available (free tier fallback)
+    // Auto-scaffold Claude Code agent setup if not present
+    if (options.init !== false) {
+      const cwd = process.cwd()
+      const hasClaudeMd = existsSync(join(cwd, 'CLAUDE.md'))
+      const hasClaudeDir = existsSync(join(cwd, '.claude'))
+
+      if (!hasClaudeMd && !hasClaudeDir) {
+        console.log(chalk.hex('#39FF14').bold('\n  Mythic L2 — Auto-initializing Claude Code agent setup\n'))
+        const created = scaffoldAgentSetup(cwd)
+        if (created > 0) {
+          console.log()
+          console.log(chalk.green(`  ${created} files created`) + chalk.dim(' — CLAUDE.md, 3 agents, 5 skills, permissions'))
+          console.log(chalk.dim('  Run `wizard init --force` to regenerate, or `wizard --no-init` to skip.'))
+          console.log()
+        }
+      }
+    }
 
     const initialPrompt = promptParts.length > 0 ? promptParts.join(' ') : undefined
     await startRepl(initialPrompt)
@@ -190,50 +251,16 @@ program
   .option('-f, --force', 'Overwrite existing files')
   .action((options) => {
     const cwd = process.cwd()
-    const templatesDir = join(WIZARD_ROOT, 'templates')
-
-    if (!existsSync(templatesDir)) {
-      console.log(chalk.red('\n  Templates not found. Reinstall wizard-cli.\n'))
-      process.exit(1)
-    }
-
-    const files = [
-      { src: 'CLAUDE.md', dest: 'CLAUDE.md' },
-      { src: 'agents/program-engineer.md', dest: '.claude/agents/program-engineer.md' },
-      { src: 'agents/defi-builder.md', dest: '.claude/agents/defi-builder.md' },
-      { src: 'agents/frontend-dev.md', dest: '.claude/agents/frontend-dev.md' },
-      { src: 'skills/build/SKILL.md', dest: '.claude/skills/build/SKILL.md' },
-      { src: 'skills/deploy/SKILL.md', dest: '.claude/skills/deploy/SKILL.md' },
-      { src: 'skills/check-network/SKILL.md', dest: '.claude/skills/check-network/SKILL.md' },
-      { src: 'skills/audit/SKILL.md', dest: '.claude/skills/audit/SKILL.md' },
-      { src: 'skills/new-program/SKILL.md', dest: '.claude/skills/new-program/SKILL.md' },
-      { src: 'settings.local.json', dest: '.claude/settings.local.json' },
-    ]
 
     console.log(chalk.hex('#39FF14').bold('\n  Mythic L2 — Claude Code Agent Setup\n'))
 
-    let created = 0
-    let skipped = 0
+    const created = scaffoldAgentSetup(cwd, { force: options.force })
 
-    for (const { src, dest } of files) {
-      const destPath = join(cwd, dest)
-      const destDir = dirname(destPath)
-
-      if (existsSync(destPath) && !options.force) {
-        console.log(chalk.dim(`  skip  ${dest}`) + chalk.dim(' (exists, use --force to overwrite)'))
-        skipped++
-        continue
-      }
-
-      mkdirSync(destDir, { recursive: true })
-      cpSync(join(templatesDir, src), destPath)
-      console.log(chalk.green(`  create  ${dest}`))
-      created++
-    }
+    if (created === -1) process.exit(1)
 
     console.log()
     if (created > 0) {
-      console.log(chalk.green(`  ${created} files created`) + (skipped > 0 ? chalk.dim(`, ${skipped} skipped`) : ''))
+      console.log(chalk.green(`  ${created} files created`))
     } else {
       console.log(chalk.dim(`  All files already exist. Use --force to overwrite.`))
     }
