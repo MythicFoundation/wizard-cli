@@ -17,6 +17,7 @@ import { mcpClient } from './mcp-client.js'
 import { planMode } from './plan-mode.js'
 import { taskManager } from './task-manager.js'
 import { hookRunner } from './hook-runner.js'
+import { thinkingIndicator, spinner as createSpinner } from './ui.js'
 
 // ─── Cost Tracking ─────────────────────────────────────────────────
 
@@ -963,6 +964,18 @@ export async function startRepl(initialPrompt?: string, resumeSession?: Session)
     let turnInputTokens = 0
     let turnOutputTokens = 0
 
+    // Thinking indicator — shows animated dots until first token
+    const thinking = thinkingIndicator()
+    thinking.start()
+    let thinkingStopped = false
+
+    function stopThinking(): void {
+      if (!thinkingStopped) {
+        thinkingStopped = true
+        thinking.stop()
+      }
+    }
+
     try {
       // Refresh tools list (MCP tools may have changed)
       const currentTools = getAllTools()
@@ -974,11 +987,15 @@ export async function startRepl(initialPrompt?: string, resumeSession?: Session)
         currentTools,
         {
           onText: (text) => {
+            // Stop thinking indicator on first text token
+            stopThinking()
             fullResponseText += text
             process.stdout.write(text)
           },
 
           onToolCall: async (tc: ToolCall) => {
+            // Stop thinking indicator if still running (tool call before any text)
+            stopThinking()
             stats.toolCalls++
 
             // Show tool call badge
@@ -1023,13 +1040,31 @@ export async function startRepl(initialPrompt?: string, resumeSession?: Session)
               }
             }
 
-            const result = await executeTool(tc.name, tc.input)
+            // Show spinner while tool executes
+            const toolSpinner = createSpinner({ indent: '  ' })
+            const category = getToolCategory(tc.name)
+            const colorFn = TOOL_COLORS[category] || chalk.gray
+            toolSpinner.start(`Running ${colorFn(tc.name)}...`)
+
+            let result: string
+            try {
+              result = await executeTool(tc.name, tc.input)
+              toolSpinner.succeed(`${colorFn(tc.name)} completed`)
+            } catch (toolErr: any) {
+              toolSpinner.fail(`${colorFn(tc.name)} failed`)
+              result = `Error: ${toolErr.message}`
+            }
+
             console.log(formatToolResult(result, tc.name))
 
             // Run post-hook
             if (hookRunner.hasHooks('post_tool_call')) {
               await hookRunner.run('post_tool_call', { toolName: tc.name, input: tc.input, output: result })
             }
+
+            // Restart thinking indicator for model's next response
+            thinkingStopped = false
+            thinking.start()
 
             return result
           },
@@ -1041,6 +1076,7 @@ export async function startRepl(initialPrompt?: string, resumeSession?: Session)
           },
 
           onComplete: () => {
+            stopThinking()
             const elapsed = Date.now() - turnStart
 
             // Use real token counts from API if available, fall back to estimate
@@ -1053,7 +1089,7 @@ export async function startRepl(initialPrompt?: string, resumeSession?: Session)
             // Render markdown on the full response
             // (We already streamed raw text; this is just for the final newlines)
             console.log()
-            console.log(chalk.dim(`  ${formatDuration(elapsed)} · ${formatCost(estimateCost(inputTok, outputTok, cfg.model))}`))
+            console.log(chalk.dim(`  ${formatDuration(elapsed)} \u00B7 ${formatCost(estimateCost(inputTok, outputTok, cfg.model))}`))
             console.log()
 
             // Save assistant message to session
@@ -1065,6 +1101,7 @@ export async function startRepl(initialPrompt?: string, resumeSession?: Session)
           },
 
           onError: (err) => {
+            stopThinking()
             console.error(chalk.red(`\n  Error: ${err.message}\n`))
             isProcessing = false
           },
@@ -1075,6 +1112,7 @@ export async function startRepl(initialPrompt?: string, resumeSession?: Session)
       messages.length = 0
       messages.push(...updatedMessages)
     } catch (err: any) {
+      stopThinking()
       if (err.message?.includes('API key')) {
         console.error(chalk.red(`\n  Authentication error. Check your API key.\n`))
       } else {

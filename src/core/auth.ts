@@ -1,28 +1,18 @@
 /**
  * Wizard CLI — Authentication Flow
  *
- * Interactive auth selector with API key validation,
- * similar to Claude Code's login experience.
+ * Arrow-key selector for auth method, API key input with
+ * live validation spinner. Clean, minimal UI like Claude Code.
  */
 
 import chalk from 'chalk'
-import readline from 'readline'
 import { setConfig, getConfig, isUsingFreeKey } from '../config/settings.js'
+import { select, spinner, passwordInput } from './ui.js'
 
-// ─── Helpers ─────────────────────────────────────────────────────
+const ACCENT = '#14F195'
+const accentFn = chalk.hex(ACCENT)
 
-function createRl(): readline.Interface {
-  return readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-  })
-}
-
-function prompt(rl: readline.Interface, question: string): Promise<string> {
-  return new Promise(resolve => {
-    rl.question(question, answer => resolve(answer.trim()))
-  })
-}
+// ─── Key Validation ─────────────────────────────────────────────
 
 async function validateAnthropicKey(key: string): Promise<boolean> {
   try {
@@ -58,15 +48,7 @@ async function validateOpenAIKey(key: string): Promise<boolean> {
   }
 }
 
-// ─── Menu Rendering ──────────────────────────────────────────────
-
-function showHeader(): void {
-  console.log()
-  console.log(chalk.hex('#9945FF')('  ╔═══════════════════════════════════════╗'))
-  console.log(chalk.hex('#9945FF')('  ║') + chalk.white.bold('   Wizard CLI — Authentication Setup   ') + chalk.hex('#9945FF')('║'))
-  console.log(chalk.hex('#9945FF')('  ╚═══════════════════════════════════════╝'))
-  console.log()
-}
+// ─── Auth Status Display ────────────────────────────────────────
 
 function showCurrentStatus(): void {
   const cfg = getConfig()
@@ -80,93 +62,82 @@ function showCurrentStatus(): void {
     if (hasAnthropic) {
       const key = process.env.ANTHROPIC_API_KEY || cfg.anthropicApiKey
       const masked = key.slice(0, 10) + '...' + key.slice(-4)
-      console.log(chalk.green('  Anthropic: ') + chalk.dim(masked))
+      console.log(chalk.green('  \u2713 Anthropic: ') + chalk.dim(masked))
     }
     if (hasOpenAI) {
       const key = process.env.OPENAI_API_KEY || cfg.openaiApiKey
       const masked = key.slice(0, 7) + '...' + key.slice(-4)
-      console.log(chalk.green('  OpenAI:    ') + chalk.dim(masked))
+      console.log(chalk.green('  \u2713 OpenAI:    ') + chalk.dim(masked))
     }
   }
   console.log()
 }
 
-function showMenu(): void {
-  console.log(chalk.white('  How would you like to authenticate?'))
-  console.log()
-  console.log(chalk.hex('#14F195')('  [1]') + chalk.white(' Anthropic API Key') + chalk.dim(' — paste your sk-ant-... key'))
-  console.log(chalk.hex('#14F195')('  [2]') + chalk.white(' OpenAI API Key') + chalk.dim(' — paste your sk-... key'))
-  console.log(chalk.hex('#14F195')('  [3]') + chalk.white(' Claude Max (OAuth)') + chalk.dim(' — browser login via Claude CLI'))
-  console.log(chalk.hex('#14F195')('  [4]') + chalk.white(' Environment Variables') + chalk.dim(' — export ANTHROPIC_API_KEY=...'))
-  console.log(chalk.hex('#14F195')('  [5]') + chalk.white(' Free Tier') + chalk.dim(' — 25 messages/day, no key needed'))
-  console.log()
-}
+// ─── Auth Handlers ──────────────────────────────────────────────
 
-// ─── Auth Flows ──────────────────────────────────────────────────
-
-async function handleAnthropicKey(rl: readline.Interface): Promise<void> {
+async function handleAnthropicKey(): Promise<void> {
   console.log()
   console.log(chalk.dim('  Get your API key at: ') + chalk.cyan('https://console.anthropic.com/settings/keys'))
   console.log()
 
-  const key = await prompt(rl, chalk.hex('#14F195')('  API Key: '))
+  const key = await passwordInput(accentFn('  API Key: '))
 
   if (!key) {
-    console.log(chalk.yellow('\n  No key entered. Cancelled.\n'))
+    console.log(chalk.yellow('  No key entered. Cancelled.'))
+    console.log()
     return
   }
 
   if (!key.startsWith('sk-ant-')) {
-    console.log(chalk.yellow('\n  Warning: Key doesn\'t start with sk-ant-. Anthropic keys typically do.'))
-    const proceed = await prompt(rl, chalk.dim('  Continue anyway? [y/N] '))
-    if (proceed.toLowerCase() !== 'y') {
-      console.log(chalk.dim('  Cancelled.\n'))
-      return
-    }
+    console.log(chalk.yellow('  Warning: Key doesn\'t start with sk-ant-. Anthropic keys typically do.'))
   }
 
-  console.log(chalk.dim('\n  Validating key...'))
+  const s = spinner()
+  s.start('Validating key...')
+
   const valid = await validateAnthropicKey(key)
 
   if (valid) {
     setConfig('anthropicApiKey', key)
-    console.log(chalk.green('\n  Authenticated with Anthropic API key.'))
-    console.log(chalk.dim('  Key saved to wizard-cli config.\n'))
+    s.succeed('Authenticated with Anthropic API key')
+    console.log(chalk.dim('  Key saved to wizard-cli config.'))
+    console.log()
   } else {
-    console.log(chalk.red('\n  Invalid API key. Please check and try again.\n'))
+    s.fail('Invalid API key. Please check and try again.')
+    console.log()
   }
 }
 
-async function handleOpenAIKey(rl: readline.Interface): Promise<void> {
+async function handleOpenAIKey(): Promise<void> {
   console.log()
   console.log(chalk.dim('  Get your API key at: ') + chalk.cyan('https://platform.openai.com/api-keys'))
   console.log()
 
-  const key = await prompt(rl, chalk.hex('#14F195')('  API Key: '))
+  const key = await passwordInput(accentFn('  API Key: '))
 
   if (!key) {
-    console.log(chalk.yellow('\n  No key entered. Cancelled.\n'))
+    console.log(chalk.yellow('  No key entered. Cancelled.'))
+    console.log()
     return
   }
 
   if (!key.startsWith('sk-')) {
-    console.log(chalk.yellow('\n  Warning: Key doesn\'t start with sk-. OpenAI keys typically do.'))
-    const proceed = await prompt(rl, chalk.dim('  Continue anyway? [y/N] '))
-    if (proceed.toLowerCase() !== 'y') {
-      console.log(chalk.dim('  Cancelled.\n'))
-      return
-    }
+    console.log(chalk.yellow('  Warning: Key doesn\'t start with sk-. OpenAI keys typically do.'))
   }
 
-  console.log(chalk.dim('\n  Validating key...'))
+  const s = spinner()
+  s.start('Validating key...')
+
   const valid = await validateOpenAIKey(key)
 
   if (valid) {
     setConfig('openaiApiKey', key)
-    console.log(chalk.green('\n  Authenticated with OpenAI API key.'))
-    console.log(chalk.dim('  Key saved to wizard-cli config.\n'))
+    s.succeed('Authenticated with OpenAI API key')
+    console.log(chalk.dim('  Key saved to wizard-cli config.'))
+    console.log()
   } else {
-    console.log(chalk.red('\n  Invalid API key. Please check and try again.\n'))
+    s.fail('Invalid API key. Please check and try again.')
+    console.log()
   }
 }
 
@@ -191,7 +162,8 @@ async function handleClaudeMax(): Promise<void> {
     console.log(chalk.white('    claude auth login'))
     console.log()
     console.log(chalk.dim('  After authenticating, Wizard CLI will automatically'))
-    console.log(chalk.dim('  use your Claude Max subscription.\n'))
+    console.log(chalk.dim('  use your Claude Max subscription.'))
+    console.log()
     return
   }
 
@@ -201,9 +173,11 @@ async function handleClaudeMax(): Promise<void> {
   try {
     const { execSync } = await import('child_process')
     execSync('claude auth login', { stdio: 'inherit' })
-    console.log(chalk.green('\n  Authenticated via Claude Max subscription.\n'))
+    console.log(chalk.green('\n  \u2713 Authenticated via Claude Max subscription.'))
+    console.log()
   } catch (err: any) {
-    console.log(chalk.red(`\n  Authentication failed: ${err.message}\n`))
+    console.log(chalk.red(`\n  Authentication failed: ${err.message}`))
+    console.log()
   }
 }
 
@@ -218,7 +192,8 @@ function handleEnvVars(): void {
   console.log(chalk.green('  export OPENAI_API_KEY=sk-...'))
   console.log()
   console.log(chalk.dim('  Add to ~/.zshrc or ~/.bashrc and restart your terminal.'))
-  console.log(chalk.dim('  Environment variables take priority over saved config.\n'))
+  console.log(chalk.dim('  Environment variables take priority over saved config.'))
+  console.log()
 }
 
 function handleFreeTier(): void {
@@ -230,43 +205,71 @@ function handleFreeTier(): void {
   console.log(chalk.dim('    Claude Sonnet (latest)'))
   console.log(chalk.dim('    All tools available'))
   console.log()
-  console.log(chalk.dim('  Upgrade anytime with ') + chalk.white('wizard login') + chalk.dim(' to add your API key.\n'))
+  console.log(chalk.dim('  Upgrade anytime with ') + chalk.white('wizard login') + chalk.dim(' to add your API key.'))
+  console.log()
 }
 
-// ─── Main Login Flow ─────────────────────────────────────────────
+// ─── Auth Method Enum ───────────────────────────────────────────
+
+type AuthMethod = 'anthropic' | 'openai' | 'claude-max' | 'env-vars' | 'free'
+
+// ─── Main Login Flow ────────────────────────────────────────────
 
 export async function runLoginFlow(): Promise<void> {
-  showHeader()
+  console.log()
+  console.log(chalk.bold.white('  Wizard CLI') + chalk.dim(' — Authentication'))
+  console.log()
+
   showCurrentStatus()
-  showMenu()
 
-  const rl = createRl()
+  const method = await select<AuthMethod>({
+    message: 'How would you like to authenticate?',
+    choices: [
+      {
+        label: 'Anthropic API Key',
+        description: 'Paste your sk-ant-... key from console.anthropic.com',
+        value: 'anthropic',
+      },
+      {
+        label: 'OpenAI API Key',
+        description: 'Paste your sk-... key from platform.openai.com',
+        value: 'openai',
+      },
+      {
+        label: 'Claude Max (OAuth)',
+        description: 'Browser login via Claude CLI',
+        value: 'claude-max',
+      },
+      {
+        label: 'Environment Variables',
+        description: 'Set ANTHROPIC_API_KEY in your shell profile',
+        value: 'env-vars',
+      },
+      {
+        label: 'Continue without auth',
+        description: 'Free tier \u2014 25 messages/day',
+        value: 'free',
+      },
+    ],
+    theme: { accent: ACCENT },
+  })
 
-  try {
-    const choice = await prompt(rl, chalk.hex('#14F195')('  Select [1-5]: '))
-
-    switch (choice) {
-      case '1':
-        await handleAnthropicKey(rl)
-        break
-      case '2':
-        await handleOpenAIKey(rl)
-        break
-      case '3':
-        rl.close()
-        await handleClaudeMax()
-        return
-      case '4':
-        handleEnvVars()
-        break
-      case '5':
-        handleFreeTier()
-        break
-      default:
-        console.log(chalk.dim('\n  Invalid choice. Run ') + chalk.white('wizard login') + chalk.dim(' to try again.\n'))
-    }
-  } finally {
-    rl.close()
+  switch (method) {
+    case 'anthropic':
+      await handleAnthropicKey()
+      break
+    case 'openai':
+      await handleOpenAIKey()
+      break
+    case 'claude-max':
+      await handleClaudeMax()
+      break
+    case 'env-vars':
+      handleEnvVars()
+      break
+    case 'free':
+      handleFreeTier()
+      break
   }
 }
 
