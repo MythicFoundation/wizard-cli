@@ -13,7 +13,7 @@ An AI dev agent that writes Solana programs, queries on-chain state, and manages
 Built on Claude Opus 4.6. 27 blockchain tools. Persistent memory. Agent spawning. MCP servers.
 
 One command to install:
-$ curl mythic.sh/wizard | bash
+$ curl -sSfL https://mythic.sh/wizard | bash
 
 ### Tweet 2
 
@@ -65,7 +65,7 @@ We just shipped the biggest upgrade to our developer toolchain. Wizard CLI is a 
 
 **Install:**
 ```
-curl mythic.sh/wizard | bash
+curl -sSfL https://mythic.sh/wizard | bash
 ```
 
 **Source:**

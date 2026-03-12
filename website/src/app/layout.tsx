@@ -12,7 +12,7 @@ export const metadata: Metadata = {
     default: 'Wizard CLI — AI-Powered Solana Development Agent | Claude + OpenAI Terminal Tools',
     template: '%s | Wizard CLI',
   },
-  description: 'The AI development agent for Solana and Mythic L2. Claude + OpenAI with 27 native blockchain tools — deploy programs, inspect accounts, bridge assets, swap tokens, run validators. Free tier. One command install: curl mythic.sh/wizard | bash',
+  description: 'The AI development agent for Solana and Mythic L2. Claude + OpenAI with 27 native blockchain tools — deploy programs, inspect accounts, bridge assets, swap tokens, run validators. Free tier. One command install: curl -sSfL https://mythic.sh/wizard | bash',
   keywords: [
     'Solana', 'CLI', 'AI', 'development', 'blockchain', 'Claude', 'OpenAI', 'GPT-4',
     'terminal', 'developer tools', 'smart contracts', 'Rust', 'Anchor',
@@ -48,7 +48,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Wizard CLI — AI Dev Agent for Solana',
-    description: 'Claude + OpenAI with 27 blockchain tools. Deploy programs, bridge, swap, validators. One command: curl mythic.sh/wizard | bash',
+    description: 'Claude + OpenAI with 27 blockchain tools. Deploy programs, bridge, swap, validators. One command: curl -sSfL https://mythic.sh/wizard | bash',
     site: '@WizardCLI',
     creator: '@WizardCLI',
     images: ['/og.png'],
