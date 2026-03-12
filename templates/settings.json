@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "mode": "default",
+    "allow": [
+      "read_file",
+      "glob_files",
+      "grep",
+      "list_directory",
+      "web_fetch",
+      "web_search",
+      "solana_balance",
+      "solana_account_info",
+      "solana_token_accounts",
+      "mythic_network_status",
+      "mythic_supply",
+      "mythic_validators",
+      "mythic_swap_pools",
+      "mythic_program_list"
+    ],
+    "deny": []
+  },
+  "mcpServers": {},
+  "agents": {
+    "enabled": true
+  },
+  "memory": {
+    "enabled": true,
+    "autoSave": true
+  }
+}

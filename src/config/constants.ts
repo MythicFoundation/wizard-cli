@@ -1,7 +1,10 @@
 // Wizard CLI — Constants
 
+import { homedir } from 'os'
+import path from 'path'
+
 export const CLI_NAME = 'wizard'
-export const CLI_VERSION = '0.2.0'
+export const CLI_VERSION = '1.0.0'
 export const CLI_DESCRIPTION = 'Wizard CLI — AI-powered Solana & Mythic L2 development agent'
 
 // ─── Model Registry ────────────────────────────────────────────────
@@ -103,3 +106,18 @@ export const CONFIG_DIR = '.wizard'
 export const CONFIG_FILE = 'config.json'
 export const HISTORY_FILE = 'history.jsonl'
 export const SYSTEM_PROMPT_FILE = 'WIZARD.md'
+
+// ─── Wizard infrastructure directories ─────────────────────────────
+
+/** Project-level .wizard/ directory name */
+export const WIZARD_DIR = '.wizard'
+
+/** Global ~/.wizard/ directory path */
+export const GLOBAL_WIZARD_DIR = path.join(homedir(), '.wizard')
+
+/** Subdirectories within .wizard/ */
+export const MEMORY_DIR = 'memory'
+export const SESSIONS_DIR = 'sessions'
+export const AGENTS_DIR = 'agents'
+export const SKILLS_DIR = 'skills'
+export const PLANS_DIR = 'plans'

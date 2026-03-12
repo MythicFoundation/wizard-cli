@@ -2,9 +2,161 @@
 
 import { Command } from 'commander'
 import chalk from 'chalk'
-import { CLI_NAME, CLI_VERSION, CLI_DESCRIPTION, NETWORKS } from './config/constants.js'
+import { existsSync, mkdirSync, copyFileSync, readFileSync, writeFileSync, readdirSync } from 'fs'
+import path from 'path'
+import { fileURLToPath } from 'url'
+import { CLI_NAME, CLI_VERSION, CLI_DESCRIPTION, NETWORKS, WIZARD_DIR, AGENTS_DIR, SKILLS_DIR, MEMORY_DIR, SESSIONS_DIR, PLANS_DIR } from './config/constants.js'
 import { setConfig, getConfig, resetConfig, type WizardConfig } from './config/settings.js'
 import { startRepl } from './core/repl.js'
+import { SessionManager } from './core/session-manager.js'
+
+// ─── Template Scaffolding ──────────────────────────────────────────
+
+/**
+ * Resolve the templates/ directory path relative to the CLI source.
+ */
+function getTemplatesDir(): string {
+  // In development: src/cli.ts -> templates/
+  // In dist: dist/cli.js -> templates/
+  const thisFile = fileURLToPath(import.meta.url)
+  const thisDir = path.dirname(thisFile)
+
+  // Try sibling of src/ or dist/
+  const candidates = [
+    path.join(thisDir, '..', 'templates'),      // from src/cli.ts or dist/cli.js
+    path.join(thisDir, '..', '..', 'templates'), // if nested deeper
+  ]
+
+  for (const candidate of candidates) {
+    if (existsSync(candidate)) {
+      return candidate
+    }
+  }
+
+  // Fallback: relative to cwd (for development)
+  const cwdCandidate = path.join(process.cwd(), 'templates')
+  if (existsSync(cwdCandidate)) {
+    return cwdCandidate
+  }
+
+  throw new Error('Could not find templates/ directory. Make sure wizard-cli is installed correctly.')
+}
+
+/**
+ * Recursively copy a directory, creating target directories as needed.
+ */
+function copyDirRecursive(src: string, dest: string): void {
+  if (!existsSync(src)) return
+  mkdirSync(dest, { recursive: true })
+
+  const entries = readdirSync(src, { withFileTypes: true })
+  for (const entry of entries) {
+    const srcPath = path.join(src, entry.name)
+    const destPath = path.join(dest, entry.name)
+
+    if (entry.isDirectory()) {
+      copyDirRecursive(srcPath, destPath)
+    } else {
+      copyFileSync(srcPath, destPath)
+    }
+  }
+}
+
+/**
+ * Scaffold the .wizard/ project infrastructure.
+ */
+function scaffoldWizardSetup(projectDir: string): void {
+  const wizardDir = path.join(projectDir, WIZARD_DIR)
+  const templatesDir = getTemplatesDir()
+
+  console.log(chalk.green('\n  Initializing Wizard CLI project...\n'))
+
+  // Create .wizard/ directory structure
+  const subdirs = [AGENTS_DIR, SKILLS_DIR, MEMORY_DIR, SESSIONS_DIR, PLANS_DIR]
+  for (const subdir of subdirs) {
+    const dir = path.join(wizardDir, subdir)
+    if (!existsSync(dir)) {
+      mkdirSync(dir, { recursive: true })
+      console.log(chalk.dim(`  Created ${WIZARD_DIR}/${subdir}/`))
+    }
+  }
+
+  // Copy agent templates
+  const agentsSrc = path.join(templatesDir, 'agents')
+  const agentsDest = path.join(wizardDir, AGENTS_DIR)
+  if (existsSync(agentsSrc)) {
+    const agentFiles = readdirSync(agentsSrc).filter(f => f.endsWith('.md'))
+    for (const file of agentFiles) {
+      const destPath = path.join(agentsDest, file)
+      if (!existsSync(destPath)) {
+        copyFileSync(path.join(agentsSrc, file), destPath)
+        console.log(chalk.dim(`  Created ${WIZARD_DIR}/${AGENTS_DIR}/${file}`))
+      } else {
+        console.log(chalk.dim(`  Exists  ${WIZARD_DIR}/${AGENTS_DIR}/${file}`))
+      }
+    }
+  }
+
+  // Copy skill templates
+  const skillsSrc = path.join(templatesDir, 'skills')
+  const skillsDest = path.join(wizardDir, SKILLS_DIR)
+  if (existsSync(skillsSrc)) {
+    const skillDirs = readdirSync(skillsSrc, { withFileTypes: true }).filter(d => d.isDirectory())
+    for (const dir of skillDirs) {
+      const srcDir = path.join(skillsSrc, dir.name)
+      const destDir = path.join(skillsDest, dir.name)
+      if (!existsSync(destDir)) {
+        copyDirRecursive(srcDir, destDir)
+        console.log(chalk.dim(`  Created ${WIZARD_DIR}/${SKILLS_DIR}/${dir.name}/`))
+      } else {
+        console.log(chalk.dim(`  Exists  ${WIZARD_DIR}/${SKILLS_DIR}/${dir.name}/`))
+      }
+    }
+  }
+
+  // Copy settings.json
+  const settingsSrc = path.join(templatesDir, 'settings.json')
+  const settingsDest = path.join(wizardDir, 'settings.json')
+  if (existsSync(settingsSrc) && !existsSync(settingsDest)) {
+    copyFileSync(settingsSrc, settingsDest)
+    console.log(chalk.dim(`  Created ${WIZARD_DIR}/settings.json`))
+  } else if (existsSync(settingsDest)) {
+    console.log(chalk.dim(`  Exists  ${WIZARD_DIR}/settings.json`))
+  }
+
+  // Create WIZARD.md at project root
+  const wizardMdSrc = path.join(templatesDir, 'WIZARD.md')
+  const wizardMdDest = path.join(projectDir, 'WIZARD.md')
+  if (existsSync(wizardMdSrc) && !existsSync(wizardMdDest)) {
+    copyFileSync(wizardMdSrc, wizardMdDest)
+    console.log(chalk.dim(`  Created WIZARD.md`))
+  } else if (existsSync(wizardMdDest)) {
+    console.log(chalk.dim(`  Exists  WIZARD.md`))
+  }
+
+  // Create empty MEMORY.md
+  const memoryMd = path.join(wizardDir, MEMORY_DIR, 'MEMORY.md')
+  if (!existsSync(memoryMd)) {
+    writeFileSync(memoryMd, '# Project Memory\n\nPersistent facts saved across sessions.\n', 'utf-8')
+    console.log(chalk.dim(`  Created ${WIZARD_DIR}/${MEMORY_DIR}/MEMORY.md`))
+  }
+
+  console.log()
+  console.log(chalk.green('  Wizard CLI project initialized!'))
+  console.log()
+  console.log(chalk.dim('  Structure:'))
+  console.log(chalk.dim(`    WIZARD.md              Project instructions`))
+  console.log(chalk.dim(`    ${WIZARD_DIR}/agents/          Agent definitions (5 specialists)`))
+  console.log(chalk.dim(`    ${WIZARD_DIR}/skills/          Skill templates (6 commands)`))
+  console.log(chalk.dim(`    ${WIZARD_DIR}/memory/          Persistent memory`))
+  console.log(chalk.dim(`    ${WIZARD_DIR}/sessions/        Conversation transcripts`))
+  console.log(chalk.dim(`    ${WIZARD_DIR}/settings.json    Permissions & config`))
+  console.log()
+  console.log(chalk.dim('  Run ') + chalk.white('wizard') + chalk.dim(' to start a session.'))
+  console.log()
+}
+
+// ─── CLI Program ────────────────────────────────────────────────────
 
 const program = new Command()
 
@@ -21,6 +173,7 @@ program
   .option('-n, --network <network>', 'Solana network (mainnet-beta, devnet, mythic-l2, etc.)')
   .option('-k, --keypair <path>', 'Path to Solana keypair JSON')
   .option('--rpc <url>', 'Custom RPC URL')
+  .option('--resume <id>', 'Resume a previous session by ID')
   .action(async (promptParts: string[], options) => {
     // Apply CLI options
     if (options.yolo) setConfig('yolo', true)
@@ -36,10 +189,73 @@ program
     if (options.keypair) setConfig('keypairPath', options.keypair)
     if (options.rpc) setConfig('customRpc', options.rpc)
 
-    // API key always available (free tier fallback)
+    // Auto-init: check if .wizard/ and WIZARD.md exist
+    const cwd = process.cwd()
+    const hasWizardDir = existsSync(path.join(cwd, WIZARD_DIR))
+    const hasWizardMd = existsSync(path.join(cwd, 'WIZARD.md'))
+
+    if (!hasWizardDir && !hasWizardMd) {
+      // Check if templates dir exists before auto-prompting
+      try {
+        getTemplatesDir()
+        console.log(chalk.dim('\n  No WIZARD.md or .wizard/ found. Run ') + chalk.white('wizard init') + chalk.dim(' to set up this project.\n'))
+      } catch {
+        // Templates not available — skip the suggestion
+      }
+    }
 
     const initialPrompt = promptParts.length > 0 ? promptParts.join(' ') : undefined
+
+    // Handle --resume option
+    if (options.resume) {
+      const session = SessionManager.loadSession(cwd, options.resume)
+      if (session) {
+        console.log(chalk.green(`\n  Resuming session ${chalk.dim(options.resume.slice(0, 8))}... (${session.messages.length} messages)\n`))
+        await startRepl(initialPrompt, session)
+      } else {
+        console.log(chalk.red(`\n  Session not found: ${options.resume}`))
+        console.log(chalk.dim('  Use ') + chalk.white('wizard sessions') + chalk.dim(' to list available sessions.\n'))
+      }
+      return
+    }
+
     await startRepl(initialPrompt)
+  })
+
+// Init subcommand — scaffold .wizard/ project infrastructure
+program
+  .command('init')
+  .description('Initialize Wizard CLI project (creates .wizard/ and WIZARD.md)')
+  .action(() => {
+    scaffoldWizardSetup(process.cwd())
+  })
+
+// Sessions subcommand — list past sessions
+program
+  .command('sessions')
+  .description('List past conversation sessions')
+  .action(() => {
+    const sessions = SessionManager.listSessions(process.cwd())
+
+    if (sessions.length === 0) {
+      console.log(chalk.dim('\n  No sessions found. Start a session with ') + chalk.white('wizard') + chalk.dim('.\n'))
+      return
+    }
+
+    console.log(chalk.green(`\n  Past Sessions (${sessions.length})\n`))
+    console.log(chalk.dim('  ─'.repeat(40)))
+
+    for (const s of sessions.slice(0, 20)) {
+      const date = new Date(s.startTime).toLocaleString()
+      const shortId = s.id.slice(0, 8)
+      const preview = s.firstMessage ? s.firstMessage.slice(0, 60) : chalk.dim('(empty)')
+      console.log(`  ${chalk.white(shortId)} ${chalk.dim(date)} ${chalk.dim(`(${s.turns} turns)`)}`)
+      console.log(`  ${chalk.dim('  ')}${preview}`)
+      console.log()
+    }
+
+    console.log(chalk.dim('  Resume a session: ') + chalk.white('wizard --resume <id>'))
+    console.log()
   })
 
 // Config subcommand

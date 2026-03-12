@@ -4,6 +4,12 @@ import { getShellTools, executeShellTool } from './shell/index.js'
 import { getSolanaTools, executeSolanaTool } from './solana/index.js'
 import { getMythicTools, executeMythicTool } from './mythic/index.js'
 import { getWebTools, executeWebTool } from './web/index.js'
+import { SPAWN_AGENT_TOOL, getAgentRunner } from '../core/agent-runner.js'
+import { getMemoryTools, executeMemoryTool, memoryManager } from '../core/memory-manager.js'
+import { getTaskTools, executeTaskTool, isTaskTool } from '../core/task-manager.js'
+import { mcpClient } from '../core/mcp-client.js'
+
+// ─── Tool Sets ────────────────────────────────────────────────────
 
 const FILESYSTEM_TOOLS = new Set(['read_file', 'write_file', 'edit_file', 'glob_files', 'grep', 'list_directory'])
 const SHELL_TOOLS = new Set(['bash'])
@@ -18,6 +24,11 @@ const MYTHIC_TOOLS = new Set([
   'mythic_wallet_overview',
 ])
 const WEB_TOOLS = new Set(['web_fetch', 'web_search'])
+const AGENT_TOOLS = new Set(['spawn_agent'])
+const MEMORY_TOOLS = new Set(['write_memory', 'search_memory'])
+const TASK_TOOLS = new Set(['task_create', 'task_update', 'task_list', 'task_get'])
+
+// ─── Get All Tools ────────────────────────────────────────────────
 
 export function getAllTools(): Tool[] {
   return [
@@ -26,8 +37,14 @@ export function getAllTools(): Tool[] {
     ...getSolanaTools(),
     ...getMythicTools(),
     ...getWebTools(),
+    SPAWN_AGENT_TOOL,
+    ...getMemoryTools(),
+    ...getTaskTools(),
+    ...mcpClient.getTools(),  // MCP tools (dynamically loaded)
   ]
 }
+
+// ─── Execute Tool ──────────────────────────────────────────────────
 
 export async function executeTool(name: string, input: Record<string, any>): Promise<string> {
   if (FILESYSTEM_TOOLS.has(name)) return executeFilesystemTool(name, input)
@@ -35,8 +52,26 @@ export async function executeTool(name: string, input: Record<string, any>): Pro
   if (SOLANA_TOOLS.has(name)) return executeSolanaTool(name, input)
   if (MYTHIC_TOOLS.has(name)) return executeMythicTool(name, input)
   if (WEB_TOOLS.has(name)) return executeWebTool(name, input)
-  return `Error: Unknown tool "${name}". Available tools: ${[...FILESYSTEM_TOOLS, ...SHELL_TOOLS, ...SOLANA_TOOLS, ...MYTHIC_TOOLS, ...WEB_TOOLS].join(', ')}`
+
+  // Agent tools
+  if (name === 'spawn_agent') {
+    const agentRunner = getAgentRunner()
+    return agentRunner.executeSpawnAgent(input as { agent_type: string; prompt: string; background?: boolean; model?: string })
+  }
+
+  // Memory tools
+  if (MEMORY_TOOLS.has(name)) return executeMemoryTool(name, input, memoryManager)
+
+  // Task tools
+  if (isTaskTool(name)) return executeTaskTool(name, input)
+
+  // MCP tools (prefixed with mcp__)
+  if (name.startsWith('mcp__')) return mcpClient.executeTool(name, input)
+
+  return `Error: Unknown tool "${name}". Available tools: ${[...FILESYSTEM_TOOLS, ...SHELL_TOOLS, ...SOLANA_TOOLS, ...MYTHIC_TOOLS, ...WEB_TOOLS, ...AGENT_TOOLS, ...MEMORY_TOOLS, ...TASK_TOOLS].join(', ')}`
 }
+
+// ─── Get Tool Category ─────────────────────────────────────────────
 
 export function getToolCategory(name: string): string {
   if (FILESYSTEM_TOOLS.has(name)) return 'filesystem'
@@ -44,5 +79,9 @@ export function getToolCategory(name: string): string {
   if (SOLANA_TOOLS.has(name)) return 'solana'
   if (MYTHIC_TOOLS.has(name)) return 'mythic'
   if (WEB_TOOLS.has(name)) return 'web'
+  if (AGENT_TOOLS.has(name)) return 'agent'
+  if (MEMORY_TOOLS.has(name)) return 'memory'
+  if (isTaskTool(name)) return 'task'
+  if (name.startsWith('mcp__')) return 'mcp'
   return 'unknown'
 }

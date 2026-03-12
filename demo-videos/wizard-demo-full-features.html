@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Inter:wght@400;500;600&family=Sora:wght@600;700;800&display=swap');
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  width: 1920px;
+  height: 1080px;
+  background: #0D1117;
+  overflow: hidden;
+  position: relative;
+  font-family: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
+}
+
+/* Ambient background glows */
+.bg-glow-1 {
+  position: absolute;
+  width: 700px; height: 700px;
+  border-radius: 50%;
+  background: #9945FF;
+  filter: blur(220px);
+  opacity: 0.05;
+  top: -200px; left: 200px;
+}
+.bg-glow-2 {
+  position: absolute;
+  width: 500px; height: 500px;
+  border-radius: 50%;
+  background: #14F195;
+  filter: blur(200px);
+  opacity: 0.04;
+  bottom: -150px; right: 200px;
+}
+.bg-glow-3 {
+  position: absolute;
+  width: 400px; height: 400px;
+  border-radius: 50%;
+  background: #FF9500;
+  filter: blur(180px);
+  opacity: 0.02;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/* Grid overlay */
+.grid-overlay {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(153,69,255,0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(20,241,149,0.02) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+}
+
+/* Top gradient bar */
+.top-bar {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #9945FF, #FF9500, #14F195);
+  z-index: 100;
+}
+
+/* Terminal window */
+.terminal {
+  position: absolute;
+  top: 40px; left: 60px; right: 60px; bottom: 80px;
+  background: rgba(13, 17, 23, 0.95);
+  border: 1px solid rgba(153, 69, 255, 0.15);
+  border-radius: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.terminal-header {
+  display: flex;
+  align-items: center;
+  padding: 14px 20px;
+  background: rgba(22, 27, 34, 0.8);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  gap: 8px;
+}
+.dot { width: 12px; height: 12px; border-radius: 50%; }
+.dot-r { background: #FF5F57; }
+.dot-y { background: #FEBC2E; }
+.dot-g { background: #28C840; }
+.terminal-title {
+  color: #484858;
+  font-size: 14px;
+  margin-left: 12px;
+  letter-spacing: 1px;
+}
+
+.terminal-body {
+  flex: 1;
+  padding: 28px 40px;
+  overflow: hidden;
+  font-size: 21px;
+  line-height: 1.55;
+}
+
+/* ASCII banner */
+.banner {
+  opacity: 0;
+  margin-bottom: 10px;
+  font-size: 13px;
+  line-height: 1.15;
+  white-space: pre;
+}
+
+/* Line styles */
+.line {
+  opacity: 0;
+  transform: translateY(4px);
+  white-space: nowrap;
+}
+.line.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.prompt { color: #14F195; font-weight: 700; }
+.cmd { color: #FFFFFF; font-weight: 500; }
+.dim { color: #484858; }
+.green { color: #14F195; }
+.purple { color: #9945FF; }
+.yellow { color: #FEBC2E; }
+.cyan { color: #00E5FF; }
+.white { color: #E0E0E8; }
+.orange { color: #FF9500; }
+.pink { color: #FF2D78; }
+.bold { font-weight: 700; }
+
+/* Skill list item */
+.skill-name { color: #14F195; font-weight: 700; display: inline-block; min-width: 200px; }
+.skill-desc { color: #686878; }
+
+/* Memory item */
+.memory-dot { color: #9945FF; }
+
+/* Mode pill */
+.mode-active { color: #14F195; font-weight: 700; }
+
+/* Stat value */
+.stat-val { color: #FFFFFF; font-weight: 700; }
+.stat-label { color: #686878; }
+
+/* Cursor */
+.cursor {
+  display: inline-block;
+  width: 12px;
+  height: 23px;
+  background: #14F195;
+  vertical-align: text-bottom;
+  animation: blink 1s step-end infinite;
+}
+@keyframes blink { 50% { opacity: 0; } }
+
+/* Separator */
+.separator {
+  border: none;
+  border-top: 1px solid rgba(153, 69, 255, 0.1);
+  margin: 4px 0;
+}
+
+/* Bottom status bar */
+.status-bar {
+  position: absolute;
+  bottom: 0; left: 60px; right: 60px;
+  height: 44px;
+  background: rgba(22, 27, 34, 0.9);
+  border-top: 1px solid rgba(153, 69, 255, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  font-size: 15px;
+  opacity: 0;
+  transition: opacity 0.5s;
+}
+.status-bar.visible { opacity: 1; }
+.status-left { color: #484858; }
+.status-right { color: #14F195; font-weight: 600; }
+
+/* Watermark */
+.watermark {
+  position: absolute;
+  top: 52px; right: 80px;
+  font-family: 'Sora', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  z-index: 50;
+  opacity: 0;
+  transition: opacity 0.5s;
+}
+.watermark.visible { opacity: 0.3; }
+.watermark span:first-child { color: #FFFFFF; }
+.watermark span:last-child {
+  background: linear-gradient(135deg, #9945FF, #14F195);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* CTA overlay */
+.cta-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(13, 17, 23, 0.97);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.8s;
+}
+.cta-overlay.visible { opacity: 1; }
+.cta-title {
+  font-family: 'Sora', sans-serif;
+  font-size: 64px;
+  font-weight: 800;
+  letter-spacing: 6px;
+  margin-bottom: 20px;
+}
+.cta-title span:first-child { color: #FFFFFF; }
+.cta-title span:last-child {
+  background: linear-gradient(135deg, #9945FF, #14F195);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.cta-sub {
+  font-size: 22px;
+  color: #686878;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  margin-bottom: 50px;
+  font-family: 'Inter', sans-serif;
+}
+.cta-features {
+  display: flex;
+  gap: 30px;
+  margin-bottom: 50px;
+}
+.cta-pill {
+  padding: 10px 24px;
+  border: 1px solid rgba(153, 69, 255, 0.3);
+  background: rgba(153, 69, 255, 0.06);
+  font-size: 16px;
+  color: #9945FF;
+  letter-spacing: 2px;
+}
+.cta-pill.green-pill {
+  border-color: rgba(20, 241, 149, 0.3);
+  background: rgba(20, 241, 149, 0.06);
+  color: #14F195;
+}
+.cta-pill.orange-pill {
+  border-color: rgba(255, 149, 0, 0.3);
+  background: rgba(255, 149, 0, 0.06);
+  color: #FF9500;
+}
+.cta-cmd {
+  font-size: 28px;
+  padding: 16px 40px;
+  background: rgba(153, 69, 255, 0.08);
+  border: 1px solid rgba(153, 69, 255, 0.3);
+  border-radius: 0;
+  margin-bottom: 20px;
+}
+.cta-cmd .prompt-cta { color: #14F195; font-weight: 700; }
+.cta-cmd .cmd-cta { color: #FFFFFF; }
+.cta-url {
+  font-size: 18px;
+  color: #14F195;
+  letter-spacing: 3px;
+  opacity: 0.7;
+}
+</style>
+</head>
+<body>
+
+<div class="bg-glow-1"></div>
+<div class="bg-glow-2"></div>
+<div class="bg-glow-3"></div>
+<div class="grid-overlay"></div>
+<div class="top-bar"></div>
+
+<div class="watermark" id="watermark">
+  <span>WIZARD </span><span>CLI</span>
+</div>
+
+<div class="terminal">
+  <div class="terminal-header">
+    <div class="dot dot-r"></div>
+    <div class="dot dot-y"></div>
+    <div class="dot dot-g"></div>
+    <span class="terminal-title">wizard -- ~/mythic-l2</span>
+  </div>
+  <div class="terminal-body" id="body">
+    <div class="banner" id="banner"></div>
+    <div id="lines"></div>
+  </div>
+</div>
+
+<div class="status-bar" id="statusbar">
+  <div class="status-left" id="status-left">Claude Opus 4.6 | Mythic L2 | interactive mode</div>
+  <div class="status-right" id="status-right"></div>
+</div>
+
+<div class="cta-overlay" id="cta">
+  <div class="cta-title"><span>WIZARD </span><span>CLI</span></div>
+  <div class="cta-sub">The Complete AI Dev Agent for Solana</div>
+  <div class="cta-features">
+    <div class="cta-pill">Skills</div>
+    <div class="cta-pill green-pill">27 Tools</div>
+    <div class="cta-pill orange-pill">Memory</div>
+    <div class="cta-pill">MCP Servers</div>
+    <div class="cta-pill green-pill">Auto Mode</div>
+  </div>
+  <div class="cta-cmd">
+    <span class="prompt-cta">$ </span><span class="cmd-cta">curl mythic.sh/wizard | bash</span>
+  </div>
+  <div class="cta-url">wizardcli.com</div>
+</div>
+
+<script>
+const BANNER_ART = [
+  '                 /\\',
+  '                /  \\',
+  '               / *  \\',
+  '              /      \\',
+  '             /   /\\   \\',
+  '            /   /  \\   \\',
+  '           /   /    \\   \\',
+  '    ______/___/______\\___\\______',
+  '   |______________________________|',
+  '',
+  '   W I Z A R D   C L I   v0.2.0',
+];
+
+const SCRIPT = [
+  // Banner
+  [0,    'banner', null],
+
+  // === /skills command ===
+  [600,  'line', { html: '<span class="prompt">wizard &#9678; </span><span class="cmd" id="typed-cmd1"></span><span class="cursor" id="cursor1"></span>' }],
+  [300,  'type', { target: 'typed-cmd1', text: '/skills', speed: 60 }],
+  [400,  'hide', 'cursor1'],
+  [200,  'line', { html: '' }],
+  [100,  'line', { html: '  <span class="skill-name">/build</span> <span class="skill-desc">Build BPF programs</span>' }],
+  [100,  'line', { html: '  <span class="skill-name">/deploy</span> <span class="skill-desc">Deploy to L1/L2</span>' }],
+  [100,  'line', { html: '  <span class="skill-name">/audit</span> <span class="skill-desc">Security audit</span>' }],
+  [100,  'line', { html: '  <span class="skill-name">/bridge-status</span> <span class="skill-desc">Bridge health check</span>' }],
+  [100,  'line', { html: '  <span class="skill-name">/supply</span> <span class="skill-desc">MYTH supply stats</span>' }],
+  [100,  'line', { html: '  <span class="skill-name">/pool-status</span> <span class="skill-desc">AMM pool data</span>' }],
+
+  [500,  'line', { html: '' }],
+
+  // === /mode auto command ===
+  [100,  'line', { html: '<span class="prompt">wizard &#9678; </span><span class="cmd" id="typed-cmd2"></span><span class="cursor" id="cursor2"></span>' }],
+  [300,  'type', { target: 'typed-cmd2', text: '/mode auto', speed: 50 }],
+  [400,  'hide', 'cursor2'],
+  [200,  'line', { html: '  <span class="mode-active">&#9679; Permission mode: auto</span> <span class="dim">(all tools approved)</span>' }],
+  [100,  'status', { left: 'Claude Opus 4.6 | Mythic L2 | auto mode', right: '' }],
+
+  [500,  'line', { html: '' }],
+
+  // === /supply command ===
+  [100,  'line', { html: '<span class="prompt">wizard &#9678; </span><span class="cmd" id="typed-cmd3"></span><span class="cursor" id="cursor3"></span>' }],
+  [300,  'type', { target: 'typed-cmd3', text: '/supply', speed: 50 }],
+  [400,  'hide', 'cursor3'],
+  [200,  'line', { html: '' }],
+  [100,  'line', { html: '<span class="purple">&#128302; mythic_supply</span>' }],
+  [200,  'line', { html: '<span class="dim">  &#9474;</span> <span class="stat-label">Total:</span>     <span class="stat-val">1,120,000,000 MYTH</span>' }],
+  [120,  'line', { html: '<span class="dim">  &#9474;</span> <span class="stat-label">Circulating:</span> <span class="stat-val">987,234,567</span>' }],
+  [120,  'line', { html: '<span class="dim">  &#9474;</span> <span class="stat-label">Burned:</span>    <span class="orange bold">847,293</span> <span class="dim">(40% of fees)</span>' }],
+  [120,  'line', { html: '<span class="dim">  &#9474;</span> <span class="stat-label">Validators:</span> <span class="green">50%</span> <span class="dim">&#9474;</span> <span class="stat-label">Foundation:</span> <span class="purple">10%</span>' }],
+
+  [500,  'line', { html: '' }],
+
+  // === /memory command ===
+  [100,  'line', { html: '<span class="prompt">wizard &#9678; </span><span class="cmd" id="typed-cmd4"></span><span class="cursor" id="cursor4"></span>' }],
+  [300,  'type', { target: 'typed-cmd4', text: '/memory', speed: 50 }],
+  [400,  'hide', 'cursor4'],
+  [200,  'line', { html: '' }],
+  [100,  'line', { html: '  <span class="yellow">&#129504; 3 memories loaded</span>' }],
+  [200,  'line', { html: '  <span class="memory-dot">&#8226;</span> <span class="white">user_role.md</span> <span class="dim">&#8212; Senior blockchain engineer</span>' }],
+  [150,  'line', { html: '  <span class="memory-dot">&#8226;</span> <span class="white">build_rules.md</span> <span class="dim">&#8212; borsh 0.10, blake3 pin</span>' }],
+  [150,  'line', { html: '  <span class="memory-dot">&#8226;</span> <span class="white">project_context.md</span> <span class="dim">&#8212; Mythic L2 staking upgrade</span>' }],
+
+  [300,  'line', { html: '' }],
+  [100,  'status', { left: 'Claude Opus 4.6 | Mythic L2 | auto mode', right: '0.8s | $0.01' }],
+  [200,  'line', { html: '<span class="dim">  0.8s &#183; $0.01</span>' }],
+  [400,  'line', { html: '' }],
+  [100,  'line', { html: '<span class="prompt">wizard &#9678; </span><span class="cursor"></span>' }],
+  [3000, 'cta', null],
+];
+
+// Engine
+const linesEl = document.getElementById('lines');
+const bannerEl = document.getElementById('banner');
+const statusBar = document.getElementById('statusbar');
+const watermark = document.getElementById('watermark');
+const ctaOverlay = document.getElementById('cta');
+
+function addLine(html) {
+  const div = document.createElement('div');
+  div.className = 'line';
+  div.innerHTML = html;
+  linesEl.appendChild(div);
+  requestAnimationFrame(() => {
+    div.classList.add('visible');
+  });
+  return div;
+}
+
+function typeText(targetId, text, speed) {
+  return new Promise((resolve) => {
+    const el = document.getElementById(targetId);
+    let i = 0;
+    const interval = setInterval(() => {
+      if (i < text.length) {
+        el.textContent += text[i];
+        i++;
+      } else {
+        clearInterval(interval);
+        resolve();
+      }
+    }, speed);
+  });
+}
+
+function showBanner() {
+  const gradientColors = [
+    '#9945FF', '#9945FF', '#A050FF', '#AA5CFF', '#B468FF',
+    '#BE74FF', '#B87AEE', '#7ECC90', '#50E0A0', '#14F195', '#14F195'
+  ];
+  let html = '';
+  BANNER_ART.forEach((line, i) => {
+    const color = gradientColors[i] || '#14F195';
+    html += `<span style="color:${color}">${line.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</span>\n`;
+  });
+  bannerEl.innerHTML = html;
+  bannerEl.style.opacity = '1';
+}
+
+async function runScript() {
+  watermark.classList.add('visible');
+  statusBar.classList.add('visible');
+
+  for (let i = 0; i < SCRIPT.length; i++) {
+    const [delay, type, data] = SCRIPT[i];
+    await new Promise(r => setTimeout(r, delay));
+
+    switch (type) {
+      case 'banner':
+        showBanner();
+        break;
+      case 'line':
+        addLine(data.html);
+        break;
+      case 'type':
+        await typeText(data.target, data.text, data.speed);
+        break;
+      case 'hide':
+        const hideEl = document.getElementById(data);
+        if (hideEl) hideEl.style.display = 'none';
+        break;
+      case 'status':
+        document.getElementById('status-left').textContent = data.left;
+        document.getElementById('status-right').textContent = data.right;
+        break;
+      case 'cta':
+        ctaOverlay.classList.add('visible');
+        break;
+    }
+  }
+}
+
+setTimeout(runScript, 300);
+</script>
+</body>
+</html>

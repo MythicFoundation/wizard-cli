@@ -1,11 +1,22 @@
 import readline from 'readline'
 import chalk from 'chalk'
+import path from 'path'
+import { existsSync, readFileSync } from 'fs'
 import type { MessageParam } from '@anthropic-ai/sdk/resources/messages'
 import { streamConversation, type ToolCall } from '../providers/claude.js'
 import { getAllTools, executeTool, getToolCategory } from '../tools/registry.js'
 import { getSystemPrompt } from './system-prompt.js'
 import { getConfig, isUsingFreeKey, checkFreeUsage, incrementFreeUsage } from '../config/settings.js'
-import { CLI_VERSION, MODELS, MODEL_ALIASES, NETWORKS, type ModelInfo } from '../config/constants.js'
+import { CLI_VERSION, MODELS, MODEL_ALIASES, NETWORKS, WIZARD_DIR, type ModelInfo } from '../config/constants.js'
+import { SessionManager, type Session } from './session-manager.js'
+import { permissionManager, type PermissionMode } from './permission-manager.js'
+import { getAgentRunner } from './agent-runner.js'
+import { skillLoader } from './skill-loader.js'
+import { memoryManager } from './memory-manager.js'
+import { mcpClient } from './mcp-client.js'
+import { planMode } from './plan-mode.js'
+import { taskManager } from './task-manager.js'
+import { hookRunner } from './hook-runner.js'
 
 // ─── Cost Tracking ─────────────────────────────────────────────────
 
@@ -96,6 +107,10 @@ const TOOL_ICONS: Record<string, string> = {
   solana: '◎',
   mythic: '🔮',
   web: '🌐',
+  agent: '🤖',
+  memory: '🧠',
+  task: '📋',
+  mcp: '🔌',
 }
 
 const TOOL_COLORS: Record<string, (s: string) => string> = {
@@ -104,6 +119,10 @@ const TOOL_COLORS: Record<string, (s: string) => string> = {
   solana: (s: string) => chalk.hex('#9945FF')(s),
   mythic: chalk.green,
   web: chalk.blue,
+  agent: chalk.magenta,
+  memory: (s: string) => chalk.hex('#FF9500')(s),
+  task: (s: string) => chalk.hex('#00E5FF')(s),
+  mcp: (s: string) => chalk.hex('#FF2D78')(s),
   unknown: chalk.gray,
 }
 
@@ -119,6 +138,11 @@ function formatToolCall(tc: ToolCall): string {
   else if (tc.name === 'edit_file') summary = tc.input.path || ''
   else if (tc.name === 'glob_files') summary = tc.input.pattern || ''
   else if (tc.name === 'grep') summary = `"${tc.input.pattern}" ${tc.input.path || ''}`
+  else if (tc.name === 'spawn_agent') summary = `${tc.input.agent_type}: ${(tc.input.prompt || '').slice(0, 60)}`
+  else if (tc.name === 'write_memory') summary = `${tc.input.filename} (${tc.input.scope || 'project'})`
+  else if (tc.name === 'search_memory') summary = `"${tc.input.query}"`
+  else if (tc.name.startsWith('task_')) summary = tc.input.id || tc.input.description?.slice(0, 50) || ''
+  else if (tc.name.startsWith('mcp__')) summary = tc.name.split('__').slice(2).join('__')
   else if (tc.name.startsWith('solana_')) summary = tc.input.address?.slice(0, 16) || tc.input.signature?.slice(0, 16) || JSON.stringify(tc.input).slice(0, 50)
   else if (tc.name.startsWith('mythic_')) summary = tc.input.address?.slice(0, 16) || tc.input.mint?.slice(0, 16) || ''
   else summary = JSON.stringify(tc.input).slice(0, 50)
@@ -147,15 +171,18 @@ function gradientText(text: string, colors: string[]): string {
   }).join('')
 }
 
-function printBanner(modelName: string, network: string, yolo: boolean, toolCount: number) {
-  const v = chalk.hex('#9945FF')   // solana purple
-  const p = chalk.hex('#9945FF')   // solana purple
-  const g = chalk.hex('#14F195')   // solana green
-  const c = chalk.hex('#14F195')   // solana green
-  const dim = chalk.dim
-  const colors = ['#9945FF', '#9945FF', '#A86BFF', '#14F195', '#14F195', '#14F195', '#14F195']
+function printBanner(
+  modelName: string,
+  network: string,
+  toolCount: number,
+  permMode: PermissionMode,
+  agentCount: number,
+  mcpServerCount: number,
+  memoryLoaded: boolean,
+  sessionId: string,
+) {
+  const d = chalk.dim
 
-  console.log()
   // True gradient: interpolate #9945FF → #14F195 per character across each line
   function lerpColor(t: number): string {
     // #9945FF (153,69,255) → #14F195 (20,241,149)
@@ -174,6 +201,7 @@ function printBanner(modelName: string, network: string, yolo: boolean, toolCoun
     }).join('')
   }
 
+  console.log()
   const art = [
     '  ██╗    ██╗██╗███████╗█████╗ ██████╗ ██████╗   █████╗ ██╗     ██╗',
     '  ██║    ██║██║╚══███╔╝██╔══██╗██╔══██╗██╔══██╗ ██╔══██╗██║     ██║',
@@ -187,7 +215,7 @@ function printBanner(modelName: string, network: string, yolo: boolean, toolCoun
   }
   console.log()
   console.log('  ' + gradLine('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'))
-  console.log(dim('  ') + chalk.bold.white('Wizard CLI') + dim(` v${CLI_VERSION}`) + dim(' — AI-powered blockchain development agent'))
+  console.log(d('  ') + chalk.bold.white('Wizard CLI') + d(` v${CLI_VERSION}`) + d(' — AI-powered blockchain development agent'))
   console.log()
 
   // Status line like Claude Code
@@ -199,17 +227,30 @@ function printBanner(modelName: string, network: string, yolo: boolean, toolCoun
   const isFree = isUsingFreeKey()
   const freeStatus = isFree ? checkFreeUsage() : null
 
-  console.log(dim('  ┌──────────────────────────────────────────────────────────┐'))
-  console.log(dim('  │') + ` Model: ${chalk.bold.white(modelDisplay)} ${dim('(')}${providerBadge}${dim(')')}`.padEnd(72) + dim('│'))
-  console.log(dim('  │') + ` Network: ${chalk.bold(network === 'mythic-l2' ? chalk.hex('#14F195')('Mythic L2') : chalk.white(network))}${' '.repeat(Math.max(0, 47 - network.length))}` + dim('│'))
-  console.log(dim('  │') + ` Tools: ${chalk.bold.white(String(toolCount))}` + dim(` available`) + `  YOLO: ${yolo ? chalk.red.bold('ON') : dim('off')}`.padEnd(34) + dim('│'))
+  // Permission mode display
+  const permDisplay = permMode === 'auto'
+    ? chalk.red.bold('AUTO')
+    : permMode === 'bypassPermissions' || permMode === 'dontAsk'
+    ? chalk.red.bold(permMode.toUpperCase())
+    : permMode === 'plan'
+    ? chalk.yellow.bold('PLAN')
+    : permMode === 'acceptEdits'
+    ? chalk.blue('acceptEdits')
+    : d('default')
+
+  console.log(d('  ┌──────────────────────────────────────────────────────────┐'))
+  console.log(d('  │') + ` Model: ${chalk.bold.white(modelDisplay)} ${d('(')}${providerBadge}${d(')')}`.padEnd(72) + d('│'))
+  console.log(d('  │') + ` Network: ${chalk.bold(network === 'mythic-l2' ? chalk.hex('#14F195')('Mythic L2') : chalk.white(network))}${' '.repeat(Math.max(0, 47 - network.length))}` + d('│'))
+  console.log(d('  │') + ` Tools: ${chalk.bold.white(String(toolCount))}` + d(` available`) + `  Mode: ${permDisplay}`.padEnd(34) + d('│'))
+  console.log(d('  │') + ` Agents: ${chalk.white(String(agentCount))}` + d(' loaded') + `  MCP: ${mcpServerCount > 0 ? chalk.green(String(mcpServerCount) + ' server' + (mcpServerCount > 1 ? 's' : '')) : d('none')}` + `  Memory: ${memoryLoaded ? chalk.green('loaded') : d('off')}`.padEnd(16) + d('│'))
   if (isFree) {
-    console.log(dim('  │') + ` ${chalk.yellow('Free tier')}: ${chalk.white(String(freeStatus!.remaining))}/${chalk.dim('25')} messages remaining today`.padEnd(65) + dim('│'))
+    console.log(d('  │') + ` ${chalk.yellow('Free tier')}: ${chalk.white(String(freeStatus!.remaining))}/${chalk.dim('25')} messages remaining today`.padEnd(65) + d('│'))
   }
-  console.log(dim('  └──────────────────────────────────────────────────────────┘'))
+  console.log(d('  │') + ` Session: ${d(sessionId.slice(0, 8))}`.padEnd(65) + d('│'))
+  console.log(d('  └──────────────────────────────────────────────────────────┘'))
   console.log()
-  console.log(dim('  Tip: ') + chalk.white('/help') + dim(' for commands, ') + chalk.white('/model') + dim(' to switch models, ') + chalk.white('Ctrl+C') + dim(' to exit'))
-  console.log(dim('  Web: ') + chalk.underline.hex('#14F195')('wizardcli.com') + dim(' · Docs: ') + chalk.underline.hex('#9945FF')('docs.wizardcli.com'))
+  console.log(d('  Tip: ') + chalk.white('/help') + d(' for commands, ') + chalk.white('/model') + d(' to switch models, ') + chalk.white('Ctrl+C') + d(' to exit'))
+  console.log(d('  Web: ') + chalk.underline.hex('#14F195')('wizardcli.com') + d(' · Docs: ') + chalk.underline.hex('#9945FF')('docs.wizardcli.com'))
   console.log()
 }
 
@@ -227,6 +268,8 @@ function printHelp() {
   console.log(`  ${c('/model')} ${d('[name]')}       ${d('Switch model or show picker')}`)
   console.log(`  ${c('/models')}              ${d('List all available models')}`)
   console.log(`  ${c('/yolo')}                ${d('Toggle auto-execute mode')}`)
+  console.log(`  ${c('/mode')} ${d('<mode>')}       ${d('Set permission mode (default|auto|plan|acceptEdits|bypassPermissions)')}`)
+  console.log(`  ${c('/plan')}                ${d('Toggle plan mode (read-only)')}`)
   console.log(`  ${c('/network')} ${d('<name>')}    ${d('Switch Solana network')}`)
   console.log(`  ${c('/keypair')} ${d('<path>')}    ${d('Set active keypair')}`)
   console.log(`  ${c('/status')}              ${d('Show session status & config')}`)
@@ -235,6 +278,23 @@ function printHelp() {
   console.log(`  ${c('/compact')}             ${d('Summarize conversation to save context')}`)
   console.log(`  ${c('/clear')}               ${d('Clear conversation history')}`)
   console.log(`  ${c('/config')} ${d('<k> <v>')}    ${d('Set a config value')}`)
+  console.log()
+  console.log(h('  Agent & Skill Commands'))
+  console.log(d('  ─'.repeat(30)))
+  console.log(`  ${c('/agent')} ${d('<type> <prompt>')}  ${d('Spawn a specialist agent')}`)
+  console.log(`  ${c('/agents')}              ${d('List available agent types')}`)
+  console.log(`  ${c('/team')} ${d('<prompt>')}     ${d('Agent team mode (lead delegates)')}`)
+  console.log(`  ${c('/skills')}              ${d('List available skills')}`)
+  console.log()
+  console.log(h('  Memory & Session Commands'))
+  console.log(d('  ─'.repeat(30)))
+  console.log(`  ${c('/memory')}              ${d('Show memory summary')}`)
+  console.log(`  ${c('/remember')} ${d('<fact>')}   ${d('Quick-save to memory')}`)
+  console.log(`  ${c('/sessions')}            ${d('List past sessions')}`)
+  console.log(`  ${c('/tasks')}               ${d('List background tasks')}`)
+  console.log(`  ${c('/mcp')}                 ${d('Show MCP server status')}`)
+  console.log(`  ${c('/init')}                ${d('Re-scaffold .wizard/ setup')}`)
+  console.log()
   console.log(`  ${c('/exit')}                ${d('Exit Wizard CLI')}`)
   console.log()
   console.log(d('  Keyboard Shortcuts'))
@@ -301,23 +361,67 @@ function printCost(model: string) {
   console.log()
 }
 
-function printStatus(cfg: any, messageCount: number) {
+function printStatus(cfg: any, messageCount: number, sessionId: string) {
   const d = chalk.dim
   const elapsed = formatDuration(Date.now() - stats.startTime)
+
+  // Gather dynamic info
+  const agentRunner = getAgentRunner()
+  const agents = agentRunner.getAgents()
+  const runningAgents = agents.filter(a => a.status === 'running' || a.status === 'background')
+  const mcpStatus = mcpClient.getStatus()
+  const permSummary = permissionManager.getSummary()
+  const taskSummary = taskManager.getSummary()
+  const planSummary = planMode.getSummary()
 
   console.log()
   console.log(chalk.bold.white('  Session Status'))
   console.log(d('  ─'.repeat(30)))
-  console.log(`  Model:      ${chalk.bold.white(MODELS[cfg.model]?.name || cfg.model)}`)
-  console.log(`  Provider:   ${MODELS[cfg.model]?.provider === 'openai' ? chalk.hex('#10A37F')('OpenAI') : chalk.hex('#D97706')('Anthropic')}`)
-  console.log(`  Network:    ${chalk.white(cfg.network)}`)
-  console.log(`  Keypair:    ${cfg.keypairPath ? chalk.white(cfg.keypairPath) : d('not set')}`)
-  console.log(`  YOLO:       ${cfg.yolo ? chalk.red.bold('ON') : d('off')}`)
-  console.log(`  Messages:   ${chalk.white(String(messageCount))}`)
-  console.log(`  Cost:       ${chalk.green(formatCost(stats.cost))}`)
-  console.log(`  Duration:   ${chalk.white(elapsed)}`)
-  console.log(`  CWD:        ${d(process.cwd())}`)
+  console.log(`  Model:       ${chalk.bold.white(MODELS[cfg.model]?.name || cfg.model)}`)
+  console.log(`  Provider:    ${MODELS[cfg.model]?.provider === 'openai' ? chalk.hex('#10A37F')('OpenAI') : chalk.hex('#D97706')('Anthropic')}`)
+  console.log(`  Network:     ${chalk.white(cfg.network)}`)
+  console.log(`  Keypair:     ${cfg.keypairPath ? chalk.white(cfg.keypairPath) : d('not set')}`)
+  console.log(`  Perm Mode:   ${chalk.white(permSummary.mode)}${permSummary.allowCount > 0 ? d(` (${permSummary.allowCount} allow, ${permSummary.denyCount} deny)`) : ''}`)
+  console.log(`  Plan Mode:   ${planSummary.active ? chalk.yellow.bold('ACTIVE') : d('off')}${planSummary.planFile ? d(` (${planSummary.planFile})`) : ''}`)
+  console.log(`  Messages:    ${chalk.white(String(messageCount))}`)
+  console.log(`  Cost:        ${chalk.green(formatCost(stats.cost))}`)
+  console.log(`  Duration:    ${chalk.white(elapsed)}`)
+  console.log(`  Session:     ${d(sessionId.slice(0, 8))}`)
+  console.log(`  CWD:         ${d(process.cwd())}`)
   console.log()
+
+  // Agents
+  if (agents.length > 0) {
+    console.log(chalk.bold.white('  Agents'))
+    console.log(d('  ─'.repeat(30)))
+    for (const a of agents) {
+      const statusIcon = a.status === 'running' ? chalk.yellow('●') :
+                         a.status === 'completed' ? chalk.green('●') :
+                         a.status === 'background' ? chalk.blue('●') :
+                         chalk.red('●')
+      console.log(`  ${statusIcon} ${chalk.white(a.name)} ${d(`(${a.status})`)}${a.duration ? d(` ${formatDuration(a.duration)}`) : ''}`)
+    }
+    console.log()
+  }
+
+  // MCP
+  if (mcpStatus.length > 0) {
+    console.log(chalk.bold.white('  MCP Servers'))
+    console.log(d('  ─'.repeat(30)))
+    for (const s of mcpStatus) {
+      const statusIcon = s.connected ? chalk.green('●') : chalk.red('●')
+      console.log(`  ${statusIcon} ${chalk.white(s.name)} ${d(`(${s.toolCount} tools)`)}`)
+    }
+    console.log()
+  }
+
+  // Tasks
+  if (taskManager.count > 0) {
+    console.log(chalk.bold.white('  Tasks'))
+    console.log(d('  ─'.repeat(30)))
+    console.log(`  Pending: ${taskSummary.pending}  In Progress: ${taskSummary.in_progress}  Completed: ${taskSummary.completed}  Failed: ${taskSummary.failed}`)
+    console.log()
+  }
 }
 
 function printTools(tools: any[]) {
@@ -345,16 +449,75 @@ function printTools(tools: any[]) {
   console.log()
 }
 
+// ─── Settings Loader ───────────────────────────────────────────────
+
+function loadWizardSettings(): any | null {
+  const settingsPath = path.join(process.cwd(), WIZARD_DIR, 'settings.json')
+  if (existsSync(settingsPath)) {
+    try {
+      return JSON.parse(readFileSync(settingsPath, 'utf-8'))
+    } catch {
+      return null
+    }
+  }
+  return null
+}
+
 // ─── Main REPL ─────────────────────────────────────────────────────
 
-export async function startRepl(initialPrompt?: string) {
+export async function startRepl(initialPrompt?: string, resumeSession?: Session) {
   const cfg = getConfig()
-  const messages: MessageParam[] = []
+
+  // ─── Initialize Session Manager ──────────────────────────────
+  const sessionManager = new SessionManager()
+
+  // ─── Initialize Permission Manager ───────────────────────────
+  permissionManager.loadDefaults()
+  permissionManager.applyLegacyConfig(cfg.yolo)
+
+  // ─── Load Skills ─────────────────────────────────────────────
+  skillLoader.loadSkills(process.cwd())
+
+  // ─── Load Agents ─────────────────────────────────────────────
+  const agentRunner = getAgentRunner(process.cwd(), sessionManager.getSessionId())
+  const agentDefs = agentRunner.loadAgents(process.cwd())
+
+  // ─── Load Hooks ──────────────────────────────────────────────
+  const wizardSettingsPath = path.join(process.cwd(), WIZARD_DIR, 'settings.json')
+  hookRunner.loadHooks(wizardSettingsPath)
+
+  // ─── Connect MCP Servers (async, non-blocking) ───────────────
+  const wizardSettings = loadWizardSettings()
+  if (wizardSettings?.mcpServers && typeof wizardSettings.mcpServers === 'object') {
+    mcpClient.connectAll(wizardSettings.mcpServers).catch(() => {
+      // MCP connection failures are non-fatal
+    })
+  }
+
+  // ─── Check memory ───────────────────────────────────────────
+  const memoryContent = memoryManager.getMemoryForPrompt()
+  const memoryLoaded = memoryContent.length > 0
+
+  // ─── Resume session if requested ────────────────────────────
+  const messages: MessageParam[] = resumeSession ? [...resumeSession.messages] : []
+  if (resumeSession) {
+    sessionManager.resumeSession(resumeSession)
+  }
+
   const tools = getAllTools()
-  let systemPrompt = getSystemPrompt()
+  const systemPrompt = getSystemPrompt()
 
   // Print banner
-  printBanner(cfg.model, cfg.network, cfg.yolo, tools.length)
+  printBanner(
+    cfg.model,
+    cfg.network,
+    tools.length,
+    permissionManager.getMode(),
+    agentDefs.length,
+    mcpClient.serverCount,
+    memoryLoaded,
+    sessionManager.getSessionId(),
+  )
 
   const rl = readline.createInterface({
     input: process.stdin,
@@ -366,125 +529,398 @@ export async function startRepl(initialPrompt?: string) {
   let isProcessing = false
   let fullResponseText = ''
 
-  async function handleInput(input: string) {
-    const trimmed = input.trim()
-    if (!trimmed) return
+  async function handleInput(rawInput: string) {
+    let input = rawInput.trim()
+    if (!input) return
 
-    // ─── Slash Commands ─────────────────────────────────────
-    if (trimmed.startsWith('/')) {
-      const [cmd, ...args] = trimmed.slice(1).split(' ')
-      switch (cmd) {
-        case 'help': case 'h':
-          printHelp()
-          return
+    // ─── Skill Matching (before slash commands) ─────────────────
+    if (input.startsWith('/')) {
+      const skillMatch = skillLoader.matchSkill(input)
+      if (skillMatch) {
+        // Expand skill into a prompt and fall through to model handling
+        input = skillLoader.expandSkill(skillMatch.skill, skillMatch.args)
+        console.log(chalk.dim(`  [Skill: ${skillMatch.skill.command}]`))
+        // Fall through — do not return, send as message to model
+      } else {
+        // ─── Slash Commands ─────────────────────────────────────
+        const [cmd, ...args] = input.slice(1).split(' ')
+        let handled = true
 
-        case 'model': case 'm': {
-          if (!args[0]) {
-            printModels(cfg.model)
+        switch (cmd) {
+          case 'help': case 'h':
+            printHelp()
+            return
+
+          case 'model': case 'm': {
+            if (!args[0]) {
+              printModels(cfg.model)
+              return
+            }
+            const resolved = MODEL_ALIASES[args[0]] || args[0]
+            if (MODELS[resolved]) {
+              cfg.model = resolved
+              const info = MODELS[resolved]
+              console.log(`\n  ${chalk.green('●')} Switched to ${chalk.bold.white(info.name)} ${chalk.dim(`(${info.provider}, $${info.inputPrice}/$${info.outputPrice} per 1M)`)}\n`)
+            } else {
+              console.log(chalk.red(`\n  Unknown model: ${args[0]}. Use /models to see available.\n`))
+            }
             return
           }
-          const resolved = MODEL_ALIASES[args[0]] || args[0]
-          if (MODELS[resolved]) {
-            cfg.model = resolved
-            const info = MODELS[resolved]
-            console.log(`\n  ${chalk.green('●')} Switched to ${chalk.bold.white(info.name)} ${chalk.dim(`(${info.provider}, $${info.inputPrice}/$${info.outputPrice} per 1M)`)}\n`)
-          } else {
-            console.log(chalk.red(`\n  Unknown model: ${args[0]}. Use /models to see available.\n`))
-          }
-          return
-        }
 
-        case 'models':
-          printModels(cfg.model)
-          return
+          case 'models':
+            printModels(cfg.model)
+            return
 
-        case 'yolo':
-          cfg.yolo = !cfg.yolo
-          console.log(`\n  YOLO mode: ${cfg.yolo ? chalk.red.bold('ON') + chalk.dim(' — all tools auto-execute') : chalk.dim('off')}\n`)
-          return
-
-        case 'network': case 'n':
-          if (args[0]) {
-            const url = (NETWORKS as any)[args[0]]
-            if (url) {
-              (cfg as any).network = args[0]
-              console.log(`\n  ${chalk.green('●')} Network: ${chalk.bold.white(args[0])} ${chalk.dim(`(${url})`)}\n`)
+          case 'yolo':
+            cfg.yolo = !cfg.yolo
+            // Map YOLO toggle to permission mode
+            if (cfg.yolo) {
+              permissionManager.setMode('auto')
             } else {
-              (cfg as any).network = args[0] as any
-              (cfg as any).customRpc = args[0]
-              console.log(`\n  ${chalk.green('●')} Custom RPC: ${chalk.bold.white(args[0])}\n`)
+              permissionManager.setMode('default')
             }
-          } else {
-            console.log(chalk.dim('\n  Available networks:'))
-            for (const [name, url] of Object.entries(NETWORKS)) {
-              const active = name === cfg.network ? chalk.green(' ●') : '  '
-              console.log(`${active} ${chalk.white(name.padEnd(18))} ${chalk.dim(url)}`)
+            console.log(`\n  YOLO mode: ${cfg.yolo ? chalk.red.bold('ON') + chalk.dim(' — all tools auto-execute (mode: auto)') : chalk.dim('off (mode: default)')}\n`)
+            return
+
+          case 'mode': {
+            const validModes = ['default', 'auto', 'plan', 'acceptEdits', 'bypassPermissions', 'dontAsk']
+            if (!args[0]) {
+              console.log(`\n  Current mode: ${chalk.bold.white(permissionManager.getMode())}`)
+              console.log(chalk.dim(`  Available: ${validModes.join(', ')}\n`))
+              return
+            }
+            if (validModes.includes(args[0])) {
+              permissionManager.setMode(args[0] as PermissionMode)
+              cfg.yolo = args[0] === 'auto' || args[0] === 'bypassPermissions' || args[0] === 'dontAsk'
+              console.log(`\n  ${chalk.green('●')} Permission mode: ${chalk.bold.white(args[0])}\n`)
+            } else {
+              console.log(chalk.red(`\n  Unknown mode: ${args[0]}. Valid: ${validModes.join(', ')}\n`))
+            }
+            return
+          }
+
+          case 'plan': {
+            if (planMode.active) {
+              planMode.exit()
+              permissionManager.setMode('default')
+              console.log(`\n  ${chalk.green('●')} Plan mode ${chalk.dim('exited')}. Normal execution resumed.\n`)
+            } else {
+              planMode.enter(args[0])
+              permissionManager.setMode('plan')
+              console.log(`\n  ${chalk.yellow('●')} Plan mode ${chalk.yellow.bold('ACTIVE')}. Only read/analysis tools allowed.`)
+              console.log(chalk.dim(`  Plan file: ${planMode.planFile}`))
+              console.log(chalk.dim(`  Use /plan again to exit.\n`))
+            }
+            return
+          }
+
+          case 'network': case 'n':
+            if (args[0]) {
+              const url = (NETWORKS as any)[args[0]]
+              if (url) {
+                (cfg as any).network = args[0]
+                console.log(`\n  ${chalk.green('●')} Network: ${chalk.bold.white(args[0])} ${chalk.dim(`(${url})`)}\n`)
+              } else {
+                (cfg as any).network = args[0] as any
+                (cfg as any).customRpc = args[0]
+                console.log(`\n  ${chalk.green('●')} Custom RPC: ${chalk.bold.white(args[0])}\n`)
+              }
+            } else {
+              console.log(chalk.dim('\n  Available networks:'))
+              for (const [name, url] of Object.entries(NETWORKS)) {
+                const active = name === cfg.network ? chalk.green(' ●') : '  '
+                console.log(`${active} ${chalk.white(name.padEnd(18))} ${chalk.dim(url)}`)
+              }
+              console.log()
+            }
+            return
+
+          case 'keypair': case 'k':
+            if (args[0]) {
+              cfg.keypairPath = args[0]
+              console.log(`\n  ${chalk.green('●')} Keypair: ${chalk.white(args[0])}\n`)
+            } else {
+              console.log(`\n  Keypair: ${cfg.keypairPath ? chalk.white(cfg.keypairPath) : chalk.dim('not set')}\n`)
+            }
+            return
+
+          case 'status': case 's':
+            printStatus(cfg, messages.length, sessionManager.getSessionId())
+            return
+
+          case 'cost': case 'c':
+            printCost(cfg.model)
+            return
+
+          case 'tools': case 't':
+            printTools(getAllTools())
+            return
+
+          case 'compact':
+            if (messages.length > 4) {
+              const kept = messages.slice(-4)
+              messages.length = 0
+              messages.push(...kept)
+              console.log(chalk.dim(`\n  Compacted: kept last ${kept.length} messages, freed context.\n`))
+            } else {
+              console.log(chalk.dim('\n  Nothing to compact.\n'))
+            }
+            return
+
+          case 'clear':
+            messages.length = 0
+            stats.inputTokens = 0
+            stats.outputTokens = 0
+            stats.cost = 0
+            stats.turns = 0
+            stats.toolCalls = 0
+            console.log(chalk.dim('\n  Conversation and stats cleared.\n'))
+            return
+
+          case 'config':
+            if (args.length >= 2) {
+              const [key, ...valueParts] = args
+              const value = valueParts.join(' ')
+              ;(cfg as any)[key] = value === 'true' ? true : value === 'false' ? false : value
+              console.log(`\n  ${chalk.green('●')} ${key} = ${value}\n`)
+            } else {
+              console.log(chalk.dim('\n  Usage: /config <key> <value>\n'))
+            }
+            return
+
+          // ─── Agent Commands ────────────────────────────────────
+
+          case 'agent': {
+            if (args.length < 2) {
+              console.log(chalk.dim('\n  Usage: /agent <type> <prompt>'))
+              console.log(chalk.dim('  Types: ') + agentDefs.map(a => chalk.white(a.name)).join(', '))
+              console.log()
+              return
+            }
+            const agentType = args[0]
+            const agentPrompt = args.slice(1).join(' ')
+            console.log(chalk.dim(`\n  Spawning agent: ${agentType}...`))
+            try {
+              const result = await agentRunner.executeSpawnAgent({
+                agent_type: agentType,
+                prompt: agentPrompt,
+              })
+              console.log()
+              console.log(renderMarkdown(result))
+              console.log()
+            } catch (err: any) {
+              console.log(chalk.red(`  Agent error: ${err.message}\n`))
+            }
+            return
+          }
+
+          case 'agents': {
+            console.log()
+            console.log(chalk.bold.white('  Available Agents'))
+            console.log(chalk.dim('  ─'.repeat(30)))
+            for (const a of agentDefs) {
+              console.log(`  ${chalk.magenta('●')} ${chalk.bold.white(a.name.padEnd(20))} ${chalk.dim(a.description.slice(0, 60))}`)
             }
             console.log()
+            console.log(chalk.dim('  Usage: /agent <type> <prompt>'))
+            console.log()
+
+            // Show running agents if any
+            const running = agentRunner.getAgents()
+            if (running.length > 0) {
+              console.log(chalk.bold.white('  Running Agents'))
+              console.log(chalk.dim('  ─'.repeat(30)))
+              for (const a of running) {
+                const icon = a.status === 'running' ? chalk.yellow('●') :
+                             a.status === 'completed' ? chalk.green('●') :
+                             a.status === 'background' ? chalk.blue('●') :
+                             chalk.red('●')
+                console.log(`  ${icon} ${chalk.white(a.name)} ${chalk.dim(`(${a.status})`)} ${a.agentId.slice(0, 8)}`)
+              }
+              console.log()
+            }
+            return
           }
-          return
 
-        case 'keypair': case 'k':
-          if (args[0]) {
-            cfg.keypairPath = args[0]
-            console.log(`\n  ${chalk.green('●')} Keypair: ${chalk.white(args[0])}\n`)
-          } else {
-            console.log(`\n  Keypair: ${cfg.keypairPath ? chalk.white(cfg.keypairPath) : chalk.dim('not set')}\n`)
+          case 'team': {
+            if (!args.length) {
+              console.log(chalk.dim('\n  Usage: /team <prompt>\n'))
+              return
+            }
+            const teamPrompt = args.join(' ')
+            console.log(chalk.dim(`\n  Launching agent team with lead + specialists...`))
+            // Use the lead agent approach — spawns as a regular agent with spawn_agent tool
+            try {
+              const result = await agentRunner.executeSpawnAgent({
+                agent_type: 'program-engineer',
+                prompt: `You are leading a team of specialist agents. Analyze this task and delegate subtasks to the appropriate specialists using the spawn_agent tool.\n\nTask: ${teamPrompt}`,
+              })
+              console.log()
+              console.log(renderMarkdown(result))
+              console.log()
+            } catch (err: any) {
+              console.log(chalk.red(`  Team error: ${err.message}\n`))
+            }
+            return
           }
-          return
 
-        case 'status': case 's':
-          printStatus(cfg, messages.length)
-          return
+          // ─── Skill Commands ────────────────────────────────────
 
-        case 'cost': case 'c':
-          printCost(cfg.model)
-          return
-
-        case 'tools': case 't':
-          printTools(tools)
-          return
-
-        case 'compact':
-          if (messages.length > 4) {
-            const kept = messages.slice(-4)
-            messages.length = 0
-            messages.push(...kept)
-            console.log(chalk.dim(`\n  Compacted: kept last ${kept.length} messages, freed context.\n`))
-          } else {
-            console.log(chalk.dim('\n  Nothing to compact.\n'))
+          case 'skills': {
+            const skills = skillLoader.getSkills()
+            console.log()
+            console.log(chalk.bold.white('  Available Skills'))
+            console.log(chalk.dim('  ─'.repeat(30)))
+            if (skills.length === 0) {
+              console.log(chalk.dim('  No skills loaded. Run /init to scaffold .wizard/skills/.'))
+            } else {
+              for (const s of skills) {
+                console.log(`  ${chalk.green(s.command.padEnd(20))} ${chalk.dim(s.description.slice(0, 55))}`)
+              }
+            }
+            console.log()
+            return
           }
-          return
 
-        case 'clear':
-          messages.length = 0
-          stats.inputTokens = 0
-          stats.outputTokens = 0
-          stats.cost = 0
-          stats.turns = 0
-          stats.toolCalls = 0
-          console.log(chalk.dim('\n  Conversation and stats cleared.\n'))
-          return
+          // ─── Memory Commands ───────────────────────────────────
 
-        case 'config':
-          if (args.length >= 2) {
-            const [key, ...valueParts] = args
-            const value = valueParts.join(' ')
-            ;(cfg as any)[key] = value === 'true' ? true : value === 'false' ? false : value
-            console.log(`\n  ${chalk.green('●')} ${key} = ${value}\n`)
-          } else {
-            console.log(chalk.dim('\n  Usage: /config <key> <value>\n'))
+          case 'memory': {
+            const memContent = memoryManager.getMemoryForPrompt()
+            console.log()
+            console.log(chalk.bold.white('  Memory'))
+            console.log(chalk.dim('  ─'.repeat(30)))
+            if (memContent) {
+              const lines = memContent.split('\n')
+              const preview = lines.slice(0, 20).join('\n')
+              console.log(chalk.dim(preview))
+              if (lines.length > 20) {
+                console.log(chalk.dim(`  ... ${lines.length - 20} more lines`))
+              }
+            } else {
+              console.log(chalk.dim('  No memory files found. Use /remember <fact> to save.'))
+            }
+            console.log()
+            return
           }
-          return
 
-        case 'exit': case 'quit': case 'q':
-          console.log(chalk.dim(`\n  Session: ${stats.turns} turns, ${stats.toolCalls} tool calls, ${formatCost(stats.cost)}, ${formatDuration(Date.now() - stats.startTime)}`))
-          console.log()
-          process.exit(0)
+          case 'remember': {
+            if (!args.length) {
+              console.log(chalk.dim('\n  Usage: /remember <fact to save>\n'))
+              return
+            }
+            const fact = args.join(' ')
+            const timestamp = new Date().toISOString().slice(0, 19)
+            try {
+              // Append to MEMORY.md
+              const memDir = path.join(process.cwd(), WIZARD_DIR, 'memory')
+              const memPath = path.join(memDir, 'MEMORY.md')
+              const { mkdirSync, appendFileSync } = await import('fs')
+              mkdirSync(memDir, { recursive: true })
+              if (!existsSync(memPath)) {
+                const { writeFileSync } = await import('fs')
+                writeFileSync(memPath, '# Project Memory\n\n', 'utf-8')
+              }
+              appendFileSync(memPath, `- ${fact} (${timestamp})\n`, 'utf-8')
+              console.log(`\n  ${chalk.green('●')} Remembered: ${chalk.dim(fact.slice(0, 60))}\n`)
+            } catch (err: any) {
+              console.log(chalk.red(`  Error saving memory: ${err.message}\n`))
+            }
+            return
+          }
 
-        default:
-          console.log(chalk.red(`  Unknown command: /${cmd}`) + chalk.dim(` — type /help for commands\n`))
-          return
+          // ─── Session Commands ──────────────────────────────────
+
+          case 'sessions': {
+            const sessions = SessionManager.listSessions(process.cwd())
+            console.log()
+            console.log(chalk.bold.white('  Past Sessions'))
+            console.log(chalk.dim('  ─'.repeat(30)))
+            if (sessions.length === 0) {
+              console.log(chalk.dim('  No previous sessions found.'))
+            } else {
+              for (const s of sessions.slice(0, 15)) {
+                const date = new Date(s.startTime).toLocaleString()
+                console.log(`  ${chalk.dim(s.id.slice(0, 8))} ${chalk.dim(date)} ${chalk.white(`${s.turns} turns`)} ${chalk.dim(s.firstMessage.slice(0, 40))}`)
+              }
+            }
+            console.log()
+            return
+          }
+
+          // ─── Task Commands ─────────────────────────────────────
+
+          case 'tasks': {
+            const tasks = taskManager.list()
+            console.log()
+            console.log(chalk.bold.white('  Background Tasks'))
+            console.log(chalk.dim('  ─'.repeat(30)))
+            if (tasks.length === 0) {
+              console.log(chalk.dim('  No tasks.'))
+            } else {
+              for (const t of tasks) {
+                const icon = t.status === 'pending' ? chalk.dim('○') :
+                             t.status === 'in_progress' ? chalk.yellow('●') :
+                             t.status === 'completed' ? chalk.green('●') :
+                             chalk.red('●')
+                console.log(`  ${icon} ${chalk.dim(t.id)} ${chalk.white(t.description.slice(0, 50))} ${chalk.dim(`(${t.status})`)}`)
+              }
+            }
+            console.log()
+            return
+          }
+
+          // ─── MCP Commands ──────────────────────────────────────
+
+          case 'mcp': {
+            const status = mcpClient.getStatus()
+            console.log()
+            console.log(chalk.bold.white('  MCP Servers'))
+            console.log(chalk.dim('  ─'.repeat(30)))
+            if (status.length === 0) {
+              console.log(chalk.dim('  No MCP servers configured.'))
+              console.log(chalk.dim('  Add servers to .wizard/settings.json under "mcpServers".'))
+            } else {
+              for (const s of status) {
+                const icon = s.connected ? chalk.green('●') : chalk.red('●')
+                console.log(`  ${icon} ${chalk.white(s.name)} ${chalk.dim(`(${s.toolCount} tools, ${s.connected ? 'connected' : 'disconnected'})`)}`)
+              }
+              console.log(chalk.dim(`\n  Total: ${mcpClient.toolCount} MCP tools across ${mcpClient.serverCount} servers`))
+            }
+            console.log()
+            return
+          }
+
+          // ─── Init Command ──────────────────────────────────────
+
+          case 'init': {
+            console.log(chalk.dim('\n  Re-scaffolding .wizard/ setup...'))
+            try {
+              const { execSync } = await import('child_process')
+              execSync('wizard init', { cwd: process.cwd(), stdio: 'inherit' })
+            } catch {
+              console.log(chalk.dim('  Run "wizard init" from the command line to scaffold.'))
+            }
+            console.log()
+            return
+          }
+
+          case 'exit': case 'quit': case 'q':
+            console.log(chalk.dim(`\n  Session: ${stats.turns} turns, ${stats.toolCalls} tool calls, ${formatCost(stats.cost)}, ${formatDuration(Date.now() - stats.startTime)}`))
+            console.log()
+            // Disconnect MCP servers on exit
+            mcpClient.disconnectAll().catch(() => {})
+            process.exit(0)
+
+          default:
+            handled = false
+            break
+        }
+
+        if (handled) return
+
+        // If no built-in command matched and no skill matched, show error
+        console.log(chalk.red(`  Unknown command: /${cmd}`) + chalk.dim(` — type /help for commands\n`))
+        return
       }
     }
 
@@ -508,7 +944,9 @@ export async function startRepl(initialPrompt?: string) {
 
     // ─── Send to Model ──────────────────────────────────────
     isProcessing = true
-    messages.push({ role: 'user', content: trimmed })
+    const userMessage: MessageParam = { role: 'user', content: input }
+    messages.push(userMessage)
+    sessionManager.appendMessage(userMessage)
     stats.turns++
     fullResponseText = ''
 
@@ -519,10 +957,14 @@ export async function startRepl(initialPrompt?: string) {
     let turnOutputTokens = 0
 
     try {
+      // Refresh tools list (MCP tools may have changed)
+      const currentTools = getAllTools()
+      const currentSystemPrompt = getSystemPrompt()
+
       const updatedMessages = await streamConversation(
         messages,
-        systemPrompt,
-        tools,
+        currentSystemPrompt,
+        currentTools,
         {
           onText: (text) => {
             fullResponseText += text
@@ -536,17 +978,30 @@ export async function startRepl(initialPrompt?: string) {
             console.log('\n')
             console.log(formatToolCall(tc))
 
-            // YOLO mode: execute immediately
-            if (cfg.yolo) {
-              const result = await executeTool(tc.name, tc.input)
-              console.log(formatToolResult(result, tc.name))
-              return result
+            // Run pre-hook
+            if (hookRunner.hasHooks('pre_tool_call')) {
+              const hookResult = await hookRunner.run('pre_tool_call', { toolName: tc.name, input: tc.input })
+              if (!hookResult.allowed) {
+                console.log(chalk.red('  Blocked by hook: ' + hookResult.output))
+                return 'Tool call blocked by hook.'
+              }
             }
 
-            // Non-YOLO: ask for confirmation on dangerous operations
-            const dangerous = ['solana_transfer', 'solana_deploy_program', 'write_file', 'edit_file', 'bash'].includes(tc.name)
+            // Check plan mode
+            if (planMode.active && !planMode.isToolAllowed(tc.name)) {
+              console.log(chalk.yellow('  Blocked: plan mode (read-only)'))
+              return 'Tool blocked: plan mode is active (read-only). Use /plan to exit.'
+            }
 
-            if (dangerous) {
+            // Check permissions
+            const permission = permissionManager.checkPermission(tc.name, tc.input)
+
+            if (permission === 'deny') {
+              console.log(chalk.red('  Denied by permission policy.'))
+              return 'Tool call denied by permission policy.'
+            }
+
+            if (permission === 'ask') {
               const answer = await new Promise<string>((resolve) => {
                 const confirmRl = readline.createInterface({ input: process.stdin, output: process.stdout })
                 confirmRl.question(chalk.yellow('  Allow? ') + chalk.dim('[Y/n] '), (ans) => {
@@ -563,6 +1018,12 @@ export async function startRepl(initialPrompt?: string) {
 
             const result = await executeTool(tc.name, tc.input)
             console.log(formatToolResult(result, tc.name))
+
+            // Run post-hook
+            if (hookRunner.hasHooks('post_tool_call')) {
+              await hookRunner.run('post_tool_call', { toolName: tc.name, input: tc.input, output: result })
+            }
+
             return result
           },
 
@@ -576,7 +1037,7 @@ export async function startRepl(initialPrompt?: string) {
             const elapsed = Date.now() - turnStart
 
             // Use real token counts from API if available, fall back to estimate
-            const inputTok = turnInputTokens > 0 ? turnInputTokens : Math.ceil(trimmed.length / 4)
+            const inputTok = turnInputTokens > 0 ? turnInputTokens : Math.ceil(input.length / 4)
             const outputTok = turnOutputTokens > 0 ? turnOutputTokens : Math.ceil(fullResponseText.length / 4)
             stats.inputTokens += inputTok
             stats.outputTokens += outputTok
@@ -587,6 +1048,11 @@ export async function startRepl(initialPrompt?: string) {
             console.log()
             console.log(chalk.dim(`  ${formatDuration(elapsed)} · ${formatCost(estimateCost(inputTok, outputTok, cfg.model))}`))
             console.log()
+
+            // Save assistant message to session
+            if (fullResponseText) {
+              sessionManager.appendMessage({ role: 'assistant', content: fullResponseText })
+            }
 
             isProcessing = false
           },
@@ -628,6 +1094,7 @@ export async function startRepl(initialPrompt?: string) {
   rl.on('close', () => {
     console.log(chalk.dim(`\n  Session: ${stats.turns} turns, ${formatCost(stats.cost)}`))
     console.log()
+    mcpClient.disconnectAll().catch(() => {})
     process.exit(0)
   })
 
@@ -640,6 +1107,7 @@ export async function startRepl(initialPrompt?: string) {
     } else {
       console.log(chalk.dim(`\n  Session: ${stats.turns} turns, ${formatCost(stats.cost)}`))
       console.log()
+      mcpClient.disconnectAll().catch(() => {})
       process.exit(0)
     }
   })
