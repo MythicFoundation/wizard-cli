@@ -393,41 +393,10 @@ program
 // ─── wizard login ────────────────────────────────────────────────
 program
   .command('login')
-  .description('Authenticate with Claude (Max subscription or API key)')
+  .description('Authenticate with Anthropic or OpenAI (interactive selector)')
   .action(async () => {
-    console.log(chalk.hex('#39FF14').bold('\n  Wizard CLI — Authentication\n'))
-
-    // Check if claude CLI is installed
-    const { execSync } = await import('child_process')
-    let claudeInstalled = false
-    try {
-      execSync('which claude', { stdio: 'pipe' })
-      claudeInstalled = true
-    } catch { }
-
-    if (claudeInstalled) {
-      console.log(chalk.white('  Option 1: Claude Max (recommended)'))
-      console.log(chalk.dim('  ─'.repeat(30)))
-      console.log(`  Run: ${chalk.green('claude auth login')}`)
-      console.log(chalk.dim('  This opens your browser to authenticate with your Claude Max subscription.'))
-      console.log()
-    }
-
-    console.log(chalk.white('  Option 2: API Key'))
-    console.log(chalk.dim('  ─'.repeat(30)))
-    console.log(`  ${chalk.green('export ANTHROPIC_API_KEY=sk-ant-...')}`)
-    console.log(chalk.dim('  Or: ') + chalk.green('wizard config set apiKey sk-ant-...'))
-    console.log(chalk.dim('  Get a key at: https://console.anthropic.com'))
-    console.log()
-
-    const cfg = getConfig()
-    const hasUserKey = !!(process.env.ANTHROPIC_API_KEY || cfg.anthropicApiKey)
-    if (hasUserKey) {
-      console.log(chalk.green('  Status: Authenticated with API key'))
-    } else {
-      console.log(chalk.yellow('  Status: Using free tier (25 messages/day)'))
-    }
-    console.log()
+    const { runLoginFlow } = await import('./core/auth.js')
+    await runLoginFlow()
   })
 
 // ─── wizard update ───────────────────────────────────────────────

@@ -293,6 +293,7 @@ function printHelp() {
   console.log(`  ${c('/sessions')}            ${d('List past sessions')}`)
   console.log(`  ${c('/tasks')}               ${d('List background tasks')}`)
   console.log(`  ${c('/mcp')}                 ${d('Show MCP server status')}`)
+  console.log(`  ${c('/login')}               ${d('Authenticate (API key / OAuth)')}`)
   console.log(`  ${c('/init')}                ${d('Re-scaffold .wizard/ setup')}`)
   console.log()
   console.log(`  ${c('/exit')}                ${d('Exit Wizard CLI')}`)
@@ -891,6 +892,12 @@ export async function startRepl(initialPrompt?: string, resumeSession?: Session)
           }
 
           // ─── Init Command ──────────────────────────────────────
+
+          case 'login': {
+            const { runLoginFlow } = await import('./auth.js')
+            await runLoginFlow()
+            return
+          }
 
           case 'init': {
             console.log(chalk.dim('\n  Re-scaffolding .wizard/ setup...'))

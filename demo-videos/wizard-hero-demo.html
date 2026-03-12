@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Inter:wght@400;500;600&family=Sora:wght@600;700;800&display=swap');
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  width: 1920px;
+  height: 1080px;
+  background: #0D1117;
+  overflow: hidden;
+  position: relative;
+  font-family: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
+}
+
+/* Ambient background glows */
+.bg-glow-1 {
+  position: absolute;
+  width: 700px; height: 700px;
+  border-radius: 50%;
+  background: #9945FF;
+  filter: blur(220px);
+  opacity: 0.05;
+  top: -200px; left: 200px;
+  animation: drift1 20s ease-in-out infinite alternate;
+}
+.bg-glow-2 {
+  position: absolute;
+  width: 500px; height: 500px;
+  border-radius: 50%;
+  background: #14F195;
+  filter: blur(200px);
+  opacity: 0.04;
+  bottom: -150px; right: 200px;
+  animation: drift2 18s ease-in-out infinite alternate;
+}
+.bg-glow-3 {
+  position: absolute;
+  width: 400px; height: 400px;
+  border-radius: 50%;
+  background: #FF9500;
+  filter: blur(180px);
+  opacity: 0.02;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+}
+@keyframes drift1 { to { transform: translate(80px, 40px); } }
+@keyframes drift2 { to { transform: translate(-60px, -30px); } }
+
+/* Grid overlay */
+.grid-overlay {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(153,69,255,0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(20,241,149,0.02) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+}
+
+/* Top gradient bar */
+.top-bar {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #9945FF, #FF9500, #14F195);
+  z-index: 100;
+}
+
+/* Terminal window */
+.terminal {
+  position: absolute;
+  top: 40px; left: 60px; right: 60px; bottom: 80px;
+  background: rgba(13, 17, 23, 0.95);
+  border: 1px solid rgba(153, 69, 255, 0.15);
+  border-radius: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.terminal-header {
+  display: flex;
+  align-items: center;
+  padding: 14px 20px;
+  background: rgba(22, 27, 34, 0.8);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  gap: 8px;
+}
+.dot { width: 12px; height: 12px; border-radius: 50%; }
+.dot-r { background: #FF5F57; }
+.dot-y { background: #FEBC2E; }
+.dot-g { background: #28C840; }
+.terminal-title {
+  color: #484858;
+  font-size: 14px;
+  margin-left: 12px;
+  letter-spacing: 1px;
+}
+
+.terminal-body {
+  flex: 1;
+  padding: 24px 40px;
+  overflow: hidden;
+  font-size: 22px;
+  line-height: 1.6;
+}
+
+/* ASCII banner */
+.banner {
+  opacity: 0;
+  margin-bottom: 8px;
+  font-size: 13px;
+  line-height: 1.15;
+  white-space: pre;
+  transition: opacity 0.4s;
+}
+.banner.visible { opacity: 1; }
+
+/* Line styles */
+.line {
+  opacity: 0;
+  transform: translateY(3px);
+  white-space: nowrap;
+  transition: opacity 0.15s, transform 0.15s;
+}
+.line.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.prompt { color: #14F195; font-weight: 700; }
+.cmd { color: #FFFFFF; font-weight: 500; }
+.dim { color: #484858; }
+.green { color: #14F195; }
+.purple { color: #9945FF; }
+.yellow { color: #FEBC2E; }
+.cyan { color: #00E5FF; }
+.white { color: #E0E0E8; }
+.orange { color: #FF9500; }
+.pink { color: #FF2D78; }
+.bold { font-weight: 700; }
+.red { color: #FF5F57; }
+
+/* Cursor */
+.cursor {
+  display: inline-block;
+  width: 11px;
+  height: 23px;
+  background: #14F195;
+  vertical-align: text-bottom;
+  animation: blink 1s step-end infinite;
+}
+@keyframes blink { 50% { opacity: 0; } }
+
+/* Bottom status bar */
+.status-bar {
+  position: absolute;
+  bottom: 0; left: 60px; right: 60px;
+  height: 44px;
+  background: rgba(22, 27, 34, 0.9);
+  border-top: 1px solid rgba(153, 69, 255, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  font-size: 15px;
+  opacity: 0;
+  transition: opacity 0.5s;
+}
+.status-bar.visible { opacity: 1; }
+.status-left { color: #484858; }
+.status-right { color: #14F195; font-weight: 600; }
+
+/* Watermark */
+.watermark {
+  position: absolute;
+  top: 52px; right: 80px;
+  font-family: 'Sora', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  z-index: 50;
+  opacity: 0;
+  transition: opacity 0.5s;
+}
+.watermark.visible { opacity: 0.3; }
+.watermark span:first-child { color: #FFFFFF; }
+.watermark span:last-child {
+  background: linear-gradient(135deg, #9945FF, #14F195);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Section divider */
+.section-fade {
+  position: absolute;
+  inset: 0;
+  background: #0D1117;
+  z-index: 150;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s;
+}
+.section-fade.visible { opacity: 1; }
+
+/* CTA overlay */
+.cta-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(13, 17, 23, 0.97);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.8s;
+}
+.cta-overlay.visible { opacity: 1; }
+.cta-title {
+  font-family: 'Sora', sans-serif;
+  font-size: 72px;
+  font-weight: 800;
+  letter-spacing: 8px;
+  margin-bottom: 20px;
+}
+.cta-title span:first-child { color: #FFFFFF; }
+.cta-title span:last-child {
+  background: linear-gradient(135deg, #9945FF, #14F195);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.cta-sub {
+  font-size: 24px;
+  color: #686878;
+  letter-spacing: 5px;
+  text-transform: uppercase;
+  margin-bottom: 50px;
+  font-family: 'Inter', sans-serif;
+}
+.cta-features {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 50px;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 1200px;
+}
+.cta-pill {
+  padding: 10px 22px;
+  border: 1px solid rgba(153, 69, 255, 0.3);
+  background: rgba(153, 69, 255, 0.06);
+  font-size: 16px;
+  color: #9945FF;
+  letter-spacing: 2px;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.4s, transform 0.4s;
+}
+.cta-pill.visible { opacity: 1; transform: translateY(0); }
+.cta-pill.green-pill {
+  border-color: rgba(20, 241, 149, 0.3);
+  background: rgba(20, 241, 149, 0.06);
+  color: #14F195;
+}
+.cta-pill.orange-pill {
+  border-color: rgba(255, 149, 0, 0.3);
+  background: rgba(255, 149, 0, 0.06);
+  color: #FF9500;
+}
+.cta-pill.cyan-pill {
+  border-color: rgba(0, 229, 255, 0.3);
+  background: rgba(0, 229, 255, 0.06);
+  color: #00E5FF;
+}
+.cta-cmd {
+  font-size: 30px;
+  padding: 18px 48px;
+  background: rgba(153, 69, 255, 0.08);
+  border: 1px solid rgba(153, 69, 255, 0.3);
+  border-radius: 0;
+  margin-bottom: 24px;
+  opacity: 0;
+  transform: scale(0.95);
+  transition: opacity 0.5s, transform 0.5s;
+}
+.cta-cmd.visible { opacity: 1; transform: scale(1); }
+.cta-cmd .prompt-cta { color: #14F195; font-weight: 700; }
+.cta-cmd .cmd-cta { color: #FFFFFF; }
+.cta-url {
+  font-size: 20px;
+  color: #14F195;
+  letter-spacing: 4px;
+  opacity: 0;
+  transition: opacity 0.5s 0.3s;
+}
+.cta-url.visible { opacity: 0.7; }
+</style>
+</head>
+<body>
+
+<div class="bg-glow-1"></div>
+<div class="bg-glow-2"></div>
+<div class="bg-glow-3"></div>
+<div class="grid-overlay"></div>
+<div class="top-bar"></div>
+
+<div class="watermark" id="watermark">
+  <span>WIZARD </span><span>CLI</span>
+</div>
+
+<div class="terminal">
+  <div class="terminal-header">
+    <div class="dot dot-r"></div>
+    <div class="dot dot-y"></div>
+    <div class="dot dot-g"></div>
+    <span class="terminal-title">wizard -- ~/mythic-l2</span>
+  </div>
+  <div class="terminal-body" id="body">
+    <div class="banner" id="banner"></div>
+    <div id="lines"></div>
+  </div>
+</div>
+
+<div class="section-fade" id="section-fade"></div>
+
+<div class="status-bar" id="statusbar">
+  <div class="status-left" id="status-left">Claude Opus 4.6 | Mythic L2 | interactive mode</div>
+  <div class="status-right" id="status-right"></div>
+</div>
+
+<div class="cta-overlay" id="cta">
+  <div class="cta-title"><span>WIZARD </span><span>CLI</span></div>
+  <div class="cta-sub">The AI Dev Agent for Solana</div>
+  <div class="cta-features" id="cta-features">
+    <div class="cta-pill" data-delay="0">Agents</div>
+    <div class="cta-pill green-pill" data-delay="100">27 Tools</div>
+    <div class="cta-pill orange-pill" data-delay="200">Memory</div>
+    <div class="cta-pill" data-delay="300">Skills</div>
+    <div class="cta-pill cyan-pill" data-delay="400">MCP Servers</div>
+    <div class="cta-pill green-pill" data-delay="500">Sessions</div>
+    <div class="cta-pill orange-pill" data-delay="600">Plan Mode</div>
+    <div class="cta-pill" data-delay="700">Permissions</div>
+  </div>
+  <div class="cta-cmd" id="cta-cmd">
+    <span class="prompt-cta">$ </span><span class="cmd-cta">curl mythic.sh/wizard | bash</span>
+  </div>
+  <div class="cta-url" id="cta-url">github.com/MythicFoundation/wizard-cli</div>
+</div>
+
+<script>
+const BANNER_ART = [
+  '                 /\\',
+  '                /  \\',
+  '               / *  \\',
+  '              /      \\',
+  '             /   /\\   \\',
+  '            /   /  \\   \\',
+  '           /   /    \\   \\',
+  '    ______/___/______\\___\\______',
+  '   |______________________________|',
+  '',
+  '   W I Z A R D   C L I   v1.0.0',
+];
+
+// ─── SCENE 1: Agent spawns Rust code ─────────────────────────────
+const SCENE_1 = [
+  [0,    'banner', null],
+  [600,  'line', '<span class="prompt">wizard &#9678; </span><span class="cmd" id="t1"></span><span class="cursor" id="c1"></span>'],
+  [200,  'type', { target: 't1', text: 'Write a Mythic L2 staking program with uptime tracking', speed: 22 }],
+  [500,  'hide', 'c1'],
+  [200,  'empty'],
+  [80,   'line', '<span class="purple">&#129302; spawn_agent</span> <span class="dim">program-engineer</span>'],
+  [250,  'line', '<span class="dim">  &#9474; Building staking program with validator uptime...</span>'],
+  [500,  'empty'],
+  [150,  'line', '<span class="purple">&#128193; write_file</span> <span class="dim">programs/staking-v2/src/lib.rs</span>'],
+  [200,  'line', '<span class="dim">  &#9474;</span> <span class="purple">use</span> <span class="white">solana_program::{account_info::AccountInfo,</span>'],
+  [60,   'line', '<span class="dim">  &#9474;</span> <span class="white">    entrypoint::ProgramResult, pubkey::Pubkey, msg};</span>'],
+  [60,   'line', '<span class="dim">  &#9474;</span> <span class="purple">use</span> <span class="white">borsh::{BorshDeserialize, BorshSerialize};</span>'],
+  [60,   'line', '<span class="dim">  &#9474;</span>'],
+  [60,   'line', '<span class="dim">  &#9474;</span> <span class="cyan">#[derive(BorshSerialize, BorshDeserialize)]</span>'],
+  [60,   'line', '<span class="dim">  &#9474;</span> <span class="purple">pub struct</span> <span class="green">UptimeRecord</span> <span class="white">{</span>'],
+  [50,   'line', '<span class="dim">  &#9474;</span> <span class="white">    </span><span class="purple">pub</span><span class="white"> validator: Pubkey,</span>'],
+  [50,   'line', '<span class="dim">  &#9474;</span> <span class="white">    </span><span class="purple">pub</span><span class="white"> total_slots: </span><span class="yellow">u64</span><span class="white">,</span>'],
+  [50,   'line', '<span class="dim">  &#9474;</span> <span class="white">    </span><span class="purple">pub</span><span class="white"> expected_slots: </span><span class="yellow">u64</span><span class="white">,</span>'],
+  [50,   'line', '<span class="dim">  &#9474;</span> <span class="white">    </span><span class="purple">pub</span><span class="white"> last_slot: </span><span class="yellow">u64</span><span class="white">,</span>'],
+  [50,   'line', '<span class="dim">  &#9474;</span> <span class="white">}</span>'],
+  [60,   'line', '<span class="dim">  &#9474;</span>'],
+  [60,   'line', '<span class="dim">  &#9474;</span> <span class="purple">pub fn</span> <span class="green">process_record_uptime</span><span class="white">(</span>'],
+  [50,   'line', '<span class="dim">  &#9474;</span> <span class="white">    accounts: &[AccountInfo], slot: </span><span class="yellow">u64</span>'],
+  [50,   'line', '<span class="dim">  &#9474;</span> <span class="white">) -> ProgramResult {</span>'],
+  [50,   'line', '<span class="dim">  &#9474;</span> <span class="white">    </span><span class="purple">let</span><span class="white"> validator = next_account_info(iter)?;</span>'],
+  [50,   'line', '<span class="dim">  &#9474;</span> <span class="white">    </span><span class="purple">let mut</span><span class="white"> rec = UptimeRecord::deserialize(</span>'],
+  [50,   'line', '<span class="dim">  &#9474;</span> <span class="white">        &mut &validator.data.borrow()[..])?;</span>'],
+  [50,   'line', '<span class="dim">  &#9474;</span> <span class="white">    rec.total_slots = rec.total_slots.checked_add(</span><span class="orange">1</span><span class="white">)</span>'],
+  [50,   'line', '<span class="dim">  &#9474;</span> <span class="white">        .ok_or(ProgramError::ArithmeticOverflow)?;</span>'],
+  [50,   'line', '<span class="dim">  &#9474;</span> <span class="white">    rec.last_slot = slot;</span>'],
+  [50,   'line', '<span class="dim">  &#9474;</span> <span class="white">    msg!(</span><span class="green">"uptime: {}/{}"</span><span class="white">, rec.total_slots, rec.expected_slots);</span>'],
+  [50,   'line', '<span class="dim">  &#9474;</span> <span class="white">    rec.serialize(&mut &mut validator.data.borrow_mut()[..])?;</span>'],
+  [50,   'line', '<span class="dim">  &#9474;</span> <span class="white">    Ok(())</span>'],
+  [50,   'line', '<span class="dim">  &#9474;</span> <span class="white">}</span>'],
+  [400,  'empty'],
+  [100,  'line', '<span class="yellow">&#9889; bash</span> <span class="dim">cargo build-sbf</span>'],
+  [300,  'line', '<span class="dim">  &#9474; Compiling staking-v2 v0.1.0</span>'],
+  [600,  'line', '<span class="green">  &#9474; &#10003; Finished release [optimized] — 142 KB</span>'],
+  [300,  'empty'],
+  [100,  'status', { left: 'Claude Opus 4.6 | Mythic L2 | auto mode', right: '3.2s | $0.04' }],
+  [150,  'line', '<span class="dim">  3.2s &#183; $0.04</span>'],
+];
+
+// ─── SCENE 2: Blockchain tools + bridge ──────────────────────────
+const SCENE_2 = [
+  [0,    'line', '<span class="prompt">wizard &#9678; </span><span class="cmd" id="t2"></span><span class="cursor" id="c2"></span>'],
+  [200,  'type', { target: 't2', text: 'Check network status, my wallet, and bridge health', speed: 24 }],
+  [500,  'hide', 'c2'],
+  [200,  'empty'],
+  [80,   'line', '<span class="purple">&#128302; mythic_network_status</span>'],
+  [200,  'line', '<span class="dim">  &#9474;</span> <span class="dim">Network:</span> <span class="white bold">Mythic L2</span> <span class="dim">(Firedancer v0.812)</span>'],
+  [100,  'line', '<span class="dim">  &#9474;</span> <span class="dim">Slot:</span> <span class="green bold">1,847,329</span>  <span class="dim">TPS:</span> <span class="white bold">2,450</span>  <span class="dim">Epoch:</span> <span class="white bold">4</span>'],
+  [100,  'line', '<span class="dim">  &#9474;</span> <span class="dim">Supply:</span> <span class="cyan bold">1.12B MYTH</span>  <span class="dim">Burned:</span> <span class="orange bold">847,293</span>'],
+  [350,  'empty'],
+  [80,   'line', '<span class="yellow">&#9678; solana_balance</span> <span class="dim">DLB2NZ5P...SWJMq</span>'],
+  [200,  'line', '<span class="dim">  &#9474;</span> <span class="white bold">100,000.00 SOL</span> <span class="dim">(sequencer)</span>'],
+  [100,  'line', '<span class="dim">  &#9474;</span> <span class="dim">Tokens:</span> <span class="white bold">10,000,000 MYTH</span>  <span class="white bold">50,000 wSOL</span>  <span class="white bold">10,000 USDC</span>'],
+  [350,  'empty'],
+  [80,   'line', '<span class="purple">&#128302; mythic_bridge_status</span>'],
+  [200,  'line', '<span class="dim">  &#9474;</span> <span class="dim">Escrow:</span> <span class="white bold">4,231 SOL</span> <span class="green">&#9679; healthy</span>'],
+  [100,  'line', '<span class="dim">  &#9474;</span> <span class="dim">Pending:</span> <span class="white bold">0</span> <span class="dim">withdrawals</span>  <span class="dim">24h vol:</span> <span class="white bold">892 SOL</span>'],
+  [100,  'line', '<span class="dim">  &#9474;</span> <span class="dim">Challenge:</span> <span class="white">24h</span>  <span class="dim">Max:</span> <span class="white">1,000 SOL</span>  <span class="dim">Daily:</span> <span class="white">10K SOL</span>'],
+  [300,  'empty'],
+  [80,   'status', { left: 'Claude Opus 4.6 | Mythic L2 | auto mode', right: '2.1s | $0.02' }],
+  [100,  'line', '<span class="dim">  2.1s &#183; $0.02</span>'],
+];
+
+// ─── SCENE 3: Skills + memory + permissions ──────────────────────
+const SCENE_3 = [
+  [0,    'line', '<span class="prompt">wizard &#9678; </span><span class="cmd" id="t3"></span><span class="cursor" id="c3"></span>'],
+  [200,  'type', { target: 't3', text: '/skills', speed: 55 }],
+  [300,  'hide', 'c3'],
+  [150,  'empty'],
+  [80,   'line', '  <span class="green bold" style="display:inline-block;min-width:220px">/build</span> <span class="dim">Build BPF programs</span>'],
+  [60,   'line', '  <span class="green bold" style="display:inline-block;min-width:220px">/deploy</span> <span class="dim">Deploy to L1/L2</span>'],
+  [60,   'line', '  <span class="green bold" style="display:inline-block;min-width:220px">/audit</span> <span class="dim">Security audit</span>'],
+  [60,   'line', '  <span class="green bold" style="display:inline-block;min-width:220px">/bridge-status</span> <span class="dim">Bridge health check</span>'],
+  [60,   'line', '  <span class="green bold" style="display:inline-block;min-width:220px">/supply</span> <span class="dim">MYTH supply stats</span>'],
+  [60,   'line', '  <span class="green bold" style="display:inline-block;min-width:220px">/pool-status</span> <span class="dim">AMM pool data</span>'],
+  [400,  'empty'],
+  [80,   'line', '<span class="prompt">wizard &#9678; </span><span class="cmd" id="t4"></span><span class="cursor" id="c4"></span>'],
+  [200,  'type', { target: 't4', text: '/mode auto', speed: 50 }],
+  [300,  'hide', 'c4'],
+  [150,  'line', '  <span class="green bold">&#9679; Permission mode: auto</span> <span class="dim">(all tools approved)</span>'],
+  [100,  'status', { left: 'Claude Opus 4.6 | Mythic L2 | auto mode', right: '' }],
+  [350,  'empty'],
+  [80,   'line', '<span class="prompt">wizard &#9678; </span><span class="cmd" id="t5"></span><span class="cursor" id="c5"></span>'],
+  [200,  'type', { target: 't5', text: '/memory', speed: 50 }],
+  [300,  'hide', 'c5'],
+  [150,  'line', '  <span class="yellow">&#129504; 4 memories loaded</span>'],
+  [120,  'line', '  <span class="purple">&#8226;</span> <span class="white">user_role.md</span> <span class="dim">— Senior blockchain engineer</span>'],
+  [100,  'line', '  <span class="purple">&#8226;</span> <span class="white">build_rules.md</span> <span class="dim">— borsh 0.10, blake3 &lt;1.8 pin</span>'],
+  [100,  'line', '  <span class="purple">&#8226;</span> <span class="white">project_context.md</span> <span class="dim">— Mythic L2 staking upgrade</span>'],
+  [100,  'line', '  <span class="purple">&#8226;</span> <span class="white">server_info.md</span> <span class="dim">— S1: 20.96.180.64 fddev</span>'],
+  [350,  'empty'],
+  [80,   'line', '<span class="prompt">wizard &#9678; </span><span class="cmd" id="t6"></span><span class="cursor" id="c6"></span>'],
+  [200,  'type', { target: 't6', text: '/agents', speed: 50 }],
+  [300,  'hide', 'c6'],
+  [150,  'line', '  <span class="cyan bold">5 agent templates</span>'],
+  [100,  'line', '  <span class="purple">&#9670;</span> <span class="white">program-engineer</span> <span class="dim">— Solana BPF specialist</span>'],
+  [80,   'line', '  <span class="purple">&#9670;</span> <span class="white">validator-ops</span> <span class="dim">— Firedancer debugging</span>'],
+  [80,   'line', '  <span class="purple">&#9670;</span> <span class="white">bridge-security</span> <span class="dim">— Bridge ops &amp; auditing</span>'],
+  [80,   'line', '  <span class="purple">&#9670;</span> <span class="white">defi-ops</span> <span class="dim">— Pool management, price sync</span>'],
+  [80,   'line', '  <span class="purple">&#9670;</span> <span class="white">frontend-dev</span> <span class="dim">— Next.js 14 + Tailwind</span>'],
+  [300,  'empty'],
+  [80,   'status', { left: 'Claude Opus 4.6 | Mythic L2 | auto mode', right: '0.4s | $0.01' }],
+  [100,  'line', '<span class="dim">  0.4s &#183; $0.01</span>'],
+  [300,  'empty'],
+  [80,   'line', '<span class="prompt">wizard &#9678; </span><span class="cursor"></span>'],
+];
+
+// ─── Engine ──────────────────────────────────────────────────────
+const linesEl = document.getElementById('lines');
+const bannerEl = document.getElementById('banner');
+const statusBar = document.getElementById('statusbar');
+const watermark = document.getElementById('watermark');
+const ctaOverlay = document.getElementById('cta');
+const sectionFade = document.getElementById('section-fade');
+
+function addLine(html) {
+  const div = document.createElement('div');
+  div.className = 'line';
+  div.innerHTML = html;
+  linesEl.appendChild(div);
+  requestAnimationFrame(() => div.classList.add('visible'));
+  return div;
+}
+
+function typeText(targetId, text, speed) {
+  return new Promise(resolve => {
+    const el = document.getElementById(targetId);
+    let i = 0;
+    const interval = setInterval(() => {
+      if (i < text.length) {
+        el.textContent += text[i];
+        i++;
+      } else {
+        clearInterval(interval);
+        resolve();
+      }
+    }, speed);
+  });
+}
+
+function showBanner() {
+  const colors = [
+    '#9945FF','#9945FF','#A050FF','#AA5CFF','#B468FF',
+    '#BE74FF','#B87AEE','#7ECC90','#50E0A0','#14F195','#14F195'
+  ];
+  let html = '';
+  BANNER_ART.forEach((line, i) => {
+    const c = colors[i] || '#14F195';
+    html += `<span style="color:${c}">${line.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</span>\n`;
+  });
+  bannerEl.innerHTML = html;
+  bannerEl.classList.add('visible');
+}
+
+async function clearTerminal() {
+  sectionFade.classList.add('visible');
+  await new Promise(r => setTimeout(r, 400));
+  linesEl.innerHTML = '';
+  bannerEl.innerHTML = '';
+  bannerEl.classList.remove('visible');
+  await new Promise(r => setTimeout(r, 200));
+  sectionFade.classList.remove('visible');
+  await new Promise(r => setTimeout(r, 300));
+}
+
+async function runScene(script) {
+  for (const step of script) {
+    const [delay, type, data] = step;
+    await new Promise(r => setTimeout(r, delay));
+
+    switch (type) {
+      case 'banner': showBanner(); break;
+      case 'line': addLine(data); break;
+      case 'empty': addLine('&nbsp;'); break;
+      case 'type': await typeText(data.target, data.text, data.speed); break;
+      case 'hide': {
+        const el = document.getElementById(data);
+        if (el) el.style.display = 'none';
+        break;
+      }
+      case 'status': {
+        document.getElementById('status-left').textContent = data.left;
+        document.getElementById('status-right').textContent = data.right;
+        break;
+      }
+    }
+  }
+}
+
+function showCTA() {
+  ctaOverlay.classList.add('visible');
+  // Animate pills
+  document.querySelectorAll('.cta-pill').forEach(pill => {
+    const d = parseInt(pill.dataset.delay || 0);
+    setTimeout(() => pill.classList.add('visible'), d);
+  });
+  setTimeout(() => document.getElementById('cta-cmd').classList.add('visible'), 900);
+  setTimeout(() => document.getElementById('cta-url').classList.add('visible'), 1100);
+}
+
+async function main() {
+  watermark.classList.add('visible');
+  statusBar.classList.add('visible');
+
+  // Scene 1: Agent coding
+  await runScene(SCENE_1);
+  await new Promise(r => setTimeout(r, 1500));
+
+  // Transition
+  await clearTerminal();
+
+  // Scene 2: Blockchain tools
+  await runScene(SCENE_2);
+  await new Promise(r => setTimeout(r, 1500));
+
+  // Transition
+  await clearTerminal();
+
+  // Scene 3: Skills, memory, permissions, agents
+  await runScene(SCENE_3);
+  await new Promise(r => setTimeout(r, 2000));
+
+  // CTA
+  showCTA();
+}
+
+setTimeout(main, 400);
+</script>
+</body>
+</html>
