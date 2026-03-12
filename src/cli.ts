@@ -158,6 +158,54 @@ function scaffoldWizardSetup(projectDir: string): void {
 
 // ─── CLI Program ────────────────────────────────────────────────────
 
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
+const WIZARD_ROOT = resolve(__dirname, '..')
+
+// ─── Shared init logic ──────────────────────────────────────────
+function scaffoldAgentSetup(cwd: string, options: { force?: boolean; silent?: boolean } = {}): number {
+  const templatesDir = join(WIZARD_ROOT, 'templates')
+
+  if (!existsSync(templatesDir)) {
+    if (!options.silent) console.log(chalk.red('\n  Templates not found. Reinstall wizard-cli.\n'))
+    return -1
+  }
+
+  const files = [
+    { src: 'CLAUDE.md', dest: 'CLAUDE.md' },
+    { src: 'agents/program-engineer.md', dest: '.claude/agents/program-engineer.md' },
+    { src: 'agents/defi-builder.md', dest: '.claude/agents/defi-builder.md' },
+    { src: 'agents/frontend-dev.md', dest: '.claude/agents/frontend-dev.md' },
+    { src: 'skills/build/SKILL.md', dest: '.claude/skills/build/SKILL.md' },
+    { src: 'skills/deploy/SKILL.md', dest: '.claude/skills/deploy/SKILL.md' },
+    { src: 'skills/check-network/SKILL.md', dest: '.claude/skills/check-network/SKILL.md' },
+    { src: 'skills/audit/SKILL.md', dest: '.claude/skills/audit/SKILL.md' },
+    { src: 'skills/new-program/SKILL.md', dest: '.claude/skills/new-program/SKILL.md' },
+    { src: 'settings.local.json', dest: '.claude/settings.local.json' },
+  ]
+
+  let created = 0
+  let skipped = 0
+
+  for (const { src, dest } of files) {
+    const destPath = join(cwd, dest)
+    const destDir = dirname(destPath)
+
+    if (existsSync(destPath) && !options.force) {
+      if (!options.silent) console.log(chalk.dim(`  skip  ${dest}`) + chalk.dim(' (exists, use --force to overwrite)'))
+      skipped++
+      continue
+    }
+
+    mkdirSync(destDir, { recursive: true })
+    cpSync(join(templatesDir, src), destPath)
+    if (!options.silent) console.log(chalk.green(`  create  ${dest}`))
+    created++
+  }
+
+  return created
+}
+
 const program = new Command()
 
 program
@@ -388,6 +436,169 @@ program
     console.log()
     console.log(chalk.dim('Dashboard: https://mythic.sh/validators'))
     console.log()
+  })
+
+// ─── wizard init ─────────────────────────────────────────────────
+program
+  .command('init')
+  .description('Scaffold Claude Code agent setup for Mythic L2 development in the current directory')
+  .option('-f, --force', 'Overwrite existing files')
+  .action((options) => {
+    const cwd = process.cwd()
+
+    console.log(chalk.hex('#39FF14').bold('\n  Mythic L2 — Claude Code Agent Setup\n'))
+
+    const created = scaffoldAgentSetup(cwd, { force: options.force })
+
+    if (created === -1) process.exit(1)
+
+    console.log()
+    if (created > 0) {
+      console.log(chalk.green(`  ${created} files created`))
+    } else {
+      console.log(chalk.dim(`  All files already exist. Use --force to overwrite.`))
+    }
+
+    console.log()
+    console.log(chalk.bold.white('  What was generated:'))
+    console.log(chalk.dim('  ─'.repeat(30)))
+    console.log(`  ${chalk.white('CLAUDE.md')}                             ${chalk.dim('Project instructions for Claude Code')}`)
+    console.log(`  ${chalk.white('.claude/agents/')}                       ${chalk.dim('3 specialist agents (program, defi, frontend)')}`)
+    console.log(`  ${chalk.white('.claude/skills/')}                       ${chalk.dim('5 slash commands (/build, /deploy, /audit, ...)')}`)
+    console.log(`  ${chalk.white('.claude/settings.local.json')}           ${chalk.dim('Permissions for Solana dev tools')}`)
+    console.log()
+    console.log(chalk.bold.white('  Next steps:'))
+    console.log(chalk.dim('  ─'.repeat(30)))
+    console.log(`  1. Install Claude Code: ${chalk.green('npm i -g @anthropic-ai/claude-code')}`)
+    console.log(`  2. Authenticate:        ${chalk.green('claude auth login')}`)
+    console.log(`  3. Start coding:        ${chalk.green('claude')}`)
+    console.log()
+    console.log(chalk.dim('  Claude Code will auto-detect CLAUDE.md, agents, and skills.'))
+    console.log(chalk.dim('  Try: /build, /deploy, /audit, /check-network, /new-program'))
+    console.log()
+  })
+
+// ─── wizard login ────────────────────────────────────────────────
+program
+  .command('login')
+  .description('Authenticate with Claude (Max subscription or API key)')
+  .action(async () => {
+    console.log(chalk.hex('#39FF14').bold('\n  Wizard CLI — Authentication\n'))
+
+    // Check if claude CLI is installed
+    let claudeInstalled = false
+    try {
+      execSync('which claude', { stdio: 'pipe' })
+      claudeInstalled = true
+    } catch { }
+
+    if (claudeInstalled) {
+      console.log(chalk.white('  Option 1: Claude Max (recommended)'))
+      console.log(chalk.dim('  ─'.repeat(30)))
+      console.log(`  Run: ${chalk.green('claude auth login')}`)
+      console.log(chalk.dim('  This opens your browser to authenticate with your Claude Max subscription.'))
+      console.log(chalk.dim('  After login, both Claude Code and Wizard CLI use the same auth.'))
+      console.log()
+    }
+
+    console.log(chalk.white('  Option 2: API Key'))
+    console.log(chalk.dim('  ─'.repeat(30)))
+    console.log(`  ${chalk.green('export ANTHROPIC_API_KEY=sk-ant-...')}`)
+    console.log(chalk.dim('  Or set persistently:'))
+    console.log(`  ${chalk.green('wizard config set apiKey sk-ant-...')}`)
+    console.log(chalk.dim('  Get a key at: https://console.anthropic.com'))
+    console.log()
+
+    // Check current auth status
+    const cfg = getConfig()
+    const hasUserKey = !!(process.env.ANTHROPIC_API_KEY || cfg.anthropicApiKey)
+
+    if (hasUserKey) {
+      console.log(chalk.green('  Status: Authenticated with API key'))
+    } else {
+      // Check for Claude Code OAuth token
+      const claudeAuthPath = join(homedir(), '.claude', '.credentials')
+      if (existsSync(claudeAuthPath)) {
+        console.log(chalk.green('  Status: Claude Code OAuth token found'))
+        console.log(chalk.dim('  Wizard REPL uses Anthropic API key; Claude Code uses OAuth.'))
+      } else {
+        console.log(chalk.yellow('  Status: Using free tier (25 messages/day)'))
+      }
+    }
+    console.log()
+  })
+
+// ─── wizard update ───────────────────────────────────────────────
+program
+  .command('update')
+  .description('Update Wizard CLI to the latest version')
+  .action(() => {
+    console.log(chalk.hex('#39FF14').bold('\n  Updating Wizard CLI...\n'))
+
+    try {
+      const wizardDir = join(homedir(), '.wizard-cli')
+      if (!existsSync(join(wizardDir, '.git'))) {
+        console.log(chalk.red('  Not a git installation. Reinstall with:'))
+        console.log(chalk.green('  curl -sSfL https://mythic.sh/wizard | bash\n'))
+        process.exit(1)
+      }
+
+      console.log(chalk.dim('  Pulling latest...'))
+      execSync('git pull origin main', { cwd: wizardDir, stdio: 'pipe' })
+
+      console.log(chalk.dim('  Installing dependencies...'))
+      execSync('npm install --production=false', { cwd: wizardDir, stdio: 'pipe' })
+
+      console.log(chalk.dim('  Building...'))
+      execSync('npm run build', { cwd: wizardDir, stdio: 'pipe' })
+
+      // Read new version
+      const pkg = JSON.parse(readFileSync(join(wizardDir, 'package.json'), 'utf-8'))
+      console.log(chalk.green(`\n  Updated to v${pkg.version}`))
+      console.log(chalk.dim('  Restart wizard to use the new version.\n'))
+    } catch (err: any) {
+      console.log(chalk.red(`  Update failed: ${err.message}\n`))
+      process.exit(1)
+    }
+  })
+
+// ─── wizard uninstall ────────────────────────────────────────────
+program
+  .command('uninstall')
+  .description('Remove Wizard CLI from your system')
+  .action(async () => {
+    const readline = await import('readline')
+    const rl = readline.createInterface({ input: process.stdin, output: process.stdout })
+
+    rl.question(chalk.yellow('\n  Remove Wizard CLI? This deletes ~/.wizard-cli [y/N] '), (answer) => {
+      rl.close()
+      if (answer.toLowerCase() !== 'y') {
+        console.log(chalk.dim('  Cancelled.\n'))
+        process.exit(0)
+      }
+
+      try {
+        const binDir = join(homedir(), '.local', 'bin')
+        const links = ['wizard', 'mythic-wizard']
+        for (const link of links) {
+          const linkPath = join(binDir, link)
+          if (existsSync(linkPath)) {
+            execSync(`rm -f "${linkPath}"`)
+            console.log(chalk.dim(`  Removed ${linkPath}`))
+          }
+        }
+
+        const wizardDir = join(homedir(), '.wizard-cli')
+        if (existsSync(wizardDir)) {
+          execSync(`rm -rf "${wizardDir}"`)
+          console.log(chalk.dim(`  Removed ${wizardDir}`))
+        }
+
+        console.log(chalk.green('\n  Wizard CLI uninstalled.\n'))
+      } catch (err: any) {
+        console.log(chalk.red(`  Uninstall failed: ${err.message}\n`))
+      }
+    })
   })
 
 program.parse()

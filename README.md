@@ -1,15 +1,14 @@
 # Wizard CLI
 
-AI-powered development agent for Solana and Mythic L2. Claude + OpenAI with 27 native blockchain tools in your terminal.
+AI-powered development toolkit for Solana and Mythic L2. Gives you a full Claude Code agent setup in one command, plus an interactive AI REPL with 27 native blockchain tools.
 
-## Overview
+## What It Does
 
-Wizard CLI is an interactive AI agent purpose-built for Solana development. It connects Claude and OpenAI models directly to on-chain operations — deploy programs, inspect accounts, bridge assets, manage validators, and write code, all from a single terminal session.
+Wizard CLI does two things:
 
-- **27 native tools** across filesystem, shell, Solana L1, and Mythic L2
-- **11 AI models** from Anthropic and OpenAI, switchable mid-conversation
-- **Free tier** — 25 messages/day with no API key required
-- **YOLO mode** — auto-execute all tool calls without confirmation
+1. **`wizard init`** — Scaffolds a complete [Claude Code](https://claude.com/claude-code) agent configuration in your project. This gives Claude Code deep knowledge of Mythic L2's architecture, programs, and APIs — plus specialist agents and slash commands for common Solana dev tasks.
+
+2. **`wizard` (REPL)** — An interactive AI agent in your terminal with 27 native Solana/Mythic tools. Deploy programs, inspect accounts, bridge assets, check pools, and write code — all from one session.
 
 ## Install
 
@@ -17,7 +16,7 @@ Wizard CLI is an interactive AI agent purpose-built for Solana development. It c
 curl -sSfL https://mythic.sh/wizard | bash
 ```
 
-Or clone manually:
+Or manually:
 
 ```bash
 git clone https://github.com/MythicFoundation/wizard-cli.git ~/.wizard-cli
@@ -25,133 +24,202 @@ cd ~/.wizard-cli && npm install && npm run build
 ln -sf ~/.wizard-cli/dist/cli.js ~/.local/bin/wizard
 ```
 
-Requires Node.js 18+. The installer handles this automatically.
+Requires Node.js 18+.
 
-## Usage
+## Quick Start
+
+### Set Up Claude Code for Your Project
 
 ```bash
-# Interactive mode
-wizard
-
-# With initial prompt
-wizard "deploy my program to devnet"
-
-# YOLO mode — auto-execute everything
-wizard --yolo "create a token mint with 6 decimals"
-
-# Specify model
-wizard --model opus
-wizard --model gpt4.1
-
-# Quick commands
-wizard status                     # Mythic L2 network status
-wizard balance <address>          # Check balance
-wizard deploy-validator --tier ai # Validator deployment
-wizard networks                   # List available networks
+cd your-solana-project
+wizard init
 ```
 
-### CLI Options
+This creates 10 files that configure Claude Code as a Mythic L2 development expert:
 
-| Flag | Description |
-|------|-------------|
-| `-y, --yolo` | Auto-execute all tool calls |
-| `-m, --model <name>` | Model selection (sonnet, opus, haiku, gpt4.1, o3, etc.) |
-| `-n, --network <name>` | Solana network (mainnet-beta, devnet, mythic-l2, etc.) |
-| `-k, --keypair <path>` | Path to Solana keypair JSON |
-| `--rpc <url>` | Custom RPC endpoint |
+```
+your-project/
+├── CLAUDE.md                                  # Project instructions for Claude
+└── .claude/
+    ├── agents/
+    │   ├── program-engineer.md                # Solana program specialist
+    │   ├── defi-builder.md                    # DeFi integration specialist
+    │   └── frontend-dev.md                    # Next.js + wallet UI specialist
+    ├── skills/
+    │   ├── build/SKILL.md                     # /build — compile BPF programs
+    │   ├── deploy/SKILL.md                    # /deploy — deploy to L2 or L1
+    │   ├── check-network/SKILL.md             # /check-network — RPC health
+    │   ├── audit/SKILL.md                     # /audit — security audit
+    │   └── new-program/SKILL.md               # /new-program — scaffold program
+    └── settings.local.json                    # Tool permissions for Solana dev
+```
 
-## Slash Commands
+Then open Claude Code in that directory:
+
+```bash
+claude
+```
+
+Claude Code auto-detects everything. Try `/build`, `/audit`, or ask it to write a Solana program.
+
+### Authenticate
+
+```bash
+wizard login
+```
+
+Two options:
+- **Claude Max** (recommended): Run `claude auth login` to authenticate with your subscription
+- **API Key**: `export ANTHROPIC_API_KEY=sk-ant-...` or `wizard config set apiKey sk-ant-...`
+
+No key? The REPL includes a free tier (25 messages/day).
+
+### Interactive REPL
+
+```bash
+wizard                                    # Start interactive session
+wizard "deploy my program to devnet"      # With initial prompt
+wizard --yolo "create a token mint"       # Auto-execute all tools
+wizard --model opus                       # Use a specific model
+```
+
+---
+
+## Claude Code Agent Setup (wizard init)
+
+### What Gets Generated
+
+#### CLAUDE.md — Project Instructions
+
+The core file. When Claude Code opens your project, it reads `CLAUDE.md` and gains full context on:
+
+- **Mythic L2 architecture** — L2 as Solana fork, Frankendancer validator, native `solana_program` (no Anchor)
+- **All program IDs** — Bridge, Token, Swap, Launchpad, Staking, Governance, Airdrop, Settlement, AI Precompiles, Compute Market
+- **Token mints** — MYTH, wSOL, USDC, wBTC, wETH with addresses and decimals
+- **Build rules** — Pinned deps (`solana-program = "=2.1.17"`, `borsh = "0.10"`, `blake3`, `getrandom`), cargo-build-sbf, overflow checks
+- **Fee system** — 50% validators / 10% foundation / 40% burn, CPI integration pattern
+- **Swap integration** — Account ordering, protocol fee vault gotchas, fee structure (3bp protocol + 22bp LP)
+- **API endpoints** — RPC, Explorer API, DEX API, Supply Oracle
+- **Coding conventions** — Rust patterns, JS/TS patterns, Next.js + Tailwind design system
+
+This means Claude Code can write correct Mythic L2 code from the first prompt — no context-setting needed.
+
+#### 3 Specialist Agents
+
+Found in `.claude/agents/`. Claude Code delegates to these for deep domain work:
+
+| Agent | Model | Specialty |
+|-------|-------|-----------|
+| **program-engineer** | Opus | Native Solana programs — account validation, PDA derivation, CPI, borsh serialization, MYTH fee collection |
+| **defi-builder** | Sonnet | DeFi integrations — MythicSwap pools, mythic.fun launchpad, bridge operations, staking, API consumption |
+| **frontend-dev** | Sonnet | Frontend — Next.js 14, Tailwind, Solana wallet-adapter, RPC hooks, design system (Sora/Inter/JetBrains Mono, #39FF14 green) |
+
+Each agent has full architectural knowledge embedded. The program-engineer knows every account validation pattern. The defi-builder knows every API endpoint. The frontend-dev knows the exact design tokens.
+
+#### 5 Slash Commands (Skills)
+
+Found in `.claude/skills/`. Type these in Claude Code:
+
+| Command | What It Does |
+|---------|-------------|
+| `/build [program\|all]` | Compile BPF programs with correct flags and dep pins |
+| `/deploy <program> [l2\|l1]` | Deploy program binary (confirms before executing) |
+| `/check-network` | Quick RPC health check (slot, version, supply) |
+| `/audit [program-dir]` | 10-point security audit (accounts, arithmetic, signers, PDAs, CPI, rent, access control) |
+| `/new-program <name>` | Scaffold a new program directory with correct deps and boilerplate |
+
+#### settings.local.json — Permissions
+
+Pre-approves common Solana dev tools so Claude Code doesn't prompt for every command:
+
+```
+cargo build-sbf, cargo check, cargo clippy, cargo test
+solana *, spl-token *
+npm run/install, npx, node
+git *, ls *, curl *
+```
+
+### Customization
+
+After `wizard init`, edit any file to match your project:
+
+- Add your own program IDs to `CLAUDE.md`
+- Create new agents in `.claude/agents/`
+- Add project-specific skills in `.claude/skills/`
+- Adjust permissions in `.claude/settings.local.json`
+
+Run `wizard init --force` to re-scaffold and overwrite existing files.
+
+---
+
+## REPL Features
+
+### 27 Native Tools
+
+The REPL gives Claude direct access to blockchain operations — no copy-pasting commands.
+
+**Filesystem (6):** `read_file`, `write_file`, `edit_file`, `glob_files`, `grep`, `list_directory`
+
+**Shell (1):** `bash` — run any command (git, npm, cargo, solana CLI, ssh)
+
+**Solana L1 (11):**
+- `solana_balance` — SOL balance
+- `solana_account_info` — owner, lamports, data size
+- `solana_transfer` — send SOL
+- `solana_transaction` — inspect tx by signature
+- `solana_recent_transactions` — recent signatures
+- `solana_token_accounts` — SPL token accounts
+- `solana_program_accounts` — accounts by program
+- `solana_airdrop` — devnet/testnet airdrop
+- `solana_deploy_program` — deploy .so binary
+- `solana_network_status` — slot, epoch, TPS
+- `solana_keygen` — generate keypair
+
+**Mythic L2 (9):**
+- `mythic_network_status` — slot, version, supply, burns
+- `mythic_bridge_status` — vault, config, challenge period
+- `mythic_supply` — circulating supply, total burned
+- `mythic_validators` — active validators, stake
+- `mythic_deploy_validator` — install command generator
+- `mythic_swap_pools` — DEX pool reserves, volume
+- `mythic_token_info` — mint details
+- `mythic_program_list` — all 11 programs + 5 token mints
+- `mythic_wallet_overview` — full wallet portrait
+
+### Models
+
+Switch models mid-conversation with `/model <name>`:
+
+| Model | Alias | Provider | Tier |
+|-------|-------|----------|------|
+| Claude Opus 4.6 | `opus-4.6` | Anthropic | Flagship |
+| Claude Sonnet 4.6 | `sonnet-4.6` | Anthropic | Balanced |
+| Claude Sonnet 4 | `sonnet` | Anthropic | Balanced |
+| Claude Haiku 4.5 | `haiku` | Anthropic | Fast |
+| GPT-4.1 | `gpt4.1` | OpenAI | Flagship |
+| GPT-4.1 Mini | `gpt4.1-mini` | OpenAI | Balanced |
+| GPT-4.1 Nano | `gpt4.1-nano` | OpenAI | Fast |
+| o3 | `o3` | OpenAI | Reasoning |
+| o4 Mini | `o4-mini` | OpenAI | Reasoning |
+
+### Slash Commands (REPL)
 
 | Command | Description |
 |---------|-------------|
-| `/help` | Show all available commands |
-| `/model [name]` | Switch model or show picker |
-| `/models` | List all models with pricing |
-| `/yolo` | Toggle auto-execute mode |
+| `/help` | Show all commands |
+| `/model [name]` | Switch model |
+| `/models` | List models with pricing |
+| `/yolo` | Toggle auto-execute |
 | `/network <name>` | Switch Solana network |
 | `/keypair <path>` | Set active keypair |
-| `/status` | Session status and config |
-| `/cost` | Token usage and cost breakdown |
+| `/status` | Session info |
+| `/cost` | Token usage breakdown |
 | `/tools` | List all 27 tools |
-| `/compact` | Summarize conversation to save context |
-| `/clear` | Clear conversation history and stats |
-| `/config <k> <v>` | Set a configuration value |
-| `/exit` | Exit |
+| `/compact` | Summarize conversation |
+| `/clear` | Reset session |
+| `/exit` | Quit |
 
-## Tools
-
-### Filesystem (6)
-
-| Tool | Description |
-|------|-------------|
-| `read_file` | Read file contents with optional line range |
-| `write_file` | Create or overwrite a file |
-| `edit_file` | Surgical string replacement in a file |
-| `glob_files` | Find files by glob pattern |
-| `grep` | Regex search across file contents (ripgrep) |
-| `list_directory` | List directory entries |
-
-### Shell (1)
-
-| Tool | Description |
-|------|-------------|
-| `bash` | Execute any command — git, npm, cargo, solana CLI, anchor, ssh |
-
-### Solana (11)
-
-| Tool | Description |
-|------|-------------|
-| `solana_balance` | SOL/MYTH balance of any address |
-| `solana_account_info` | Account owner, lamports, data size, executable |
-| `solana_transfer` | Send SOL from loaded keypair |
-| `solana_transaction` | Inspect a transaction by signature |
-| `solana_recent_transactions` | Recent signatures for an address |
-| `solana_token_accounts` | All SPL token accounts for a wallet |
-| `solana_program_accounts` | Accounts owned by a program |
-| `solana_airdrop` | Request devnet/testnet airdrop |
-| `solana_deploy_program` | Deploy a compiled .so program |
-| `solana_network_status` | Slot, epoch, TPS, version |
-| `solana_keygen` | Generate a new Solana keypair |
-
-### Mythic L2 (9)
-
-| Tool | Description |
-|------|-------------|
-| `mythic_network_status` | L2 slot, version, supply, burns |
-| `mythic_bridge_status` | Vault balance, config, challenge period |
-| `mythic_supply` | Circulating supply, total burned |
-| `mythic_validators` | Active validators, stake, rewards |
-| `mythic_deploy_validator` | Generate validator install command |
-| `mythic_swap_pools` | DEX pool reserves and volume |
-| `mythic_token_info` | Mint supply, decimals, owner |
-| `mythic_program_list` | All 11 Mythic programs and token mints |
-| `mythic_wallet_overview` | Full wallet portrait (balance + tokens + txs) |
-
-## Models
-
-### Anthropic
-
-| Model | Alias | Tier | Context |
-|-------|-------|------|---------|
-| Claude Opus 4.6 | `opus` | Flagship | 200K |
-| Claude Sonnet 4.6 | `sonnet` | Balanced | 200K |
-| Claude Sonnet 4 | `sonnet` | Balanced | 200K |
-| Claude Haiku 4.5 | `haiku` | Fast | 200K |
-
-### OpenAI
-
-| Model | Alias | Tier | Context |
-|-------|-------|------|---------|
-| GPT-4.1 | `gpt4.1` | Flagship | 1M |
-| GPT-4.1 Mini | `gpt4.1-mini` | Balanced | 1M |
-| GPT-4.1 Nano | `gpt4.1-nano` | Fast | 1M |
-| o3 | `o3` | Reasoning | 200K |
-| o3 Mini | `o3-mini` | Reasoning | 200K |
-| o4 Mini | `o4-mini` | Reasoning | 200K |
-
-Switch mid-conversation: `/model opus`, `/model gpt4.1`, `/model o3`
-
-## Networks
+### Networks
 
 | Name | RPC |
 |------|-----|
@@ -159,24 +227,40 @@ Switch mid-conversation: `/model opus`, `/model gpt4.1`, `/model o3`
 | `mythic-testnet` | `https://testnet.mythic.sh` |
 | `mainnet-beta` | `https://api.mainnet-beta.solana.com` |
 | `devnet` | `https://api.devnet.solana.com` |
-| `testnet` | `https://api.testnet.solana.com` |
 | `localnet` | `http://127.0.0.1:8899` |
 
-Default network is `mythic-l2`. Switch with `--network` flag or `/network` command.
+Default: `mythic-l2`. Switch with `--network` or `/network`.
+
+---
+
+## All Commands
+
+```bash
+wizard                            # Start REPL
+wizard [prompt...]                # REPL with initial prompt
+wizard init [--force]             # Scaffold Claude Code agent setup
+wizard login                      # Authentication options
+wizard status                     # Mythic L2 network status
+wizard balance <address>          # Check SOL/MYTH balance
+wizard deploy-validator [--tier]  # Validator install command
+wizard networks                   # List available networks
+wizard config set <key> <value>   # Set config
+wizard config get [key]           # Get config
+wizard config reset               # Reset to defaults
+wizard update                     # Update to latest version
+wizard uninstall                  # Remove Wizard CLI
+```
 
 ## Configuration
 
-Set your own API key for unlimited usage:
-
 ```bash
+# API keys
 export ANTHROPIC_API_KEY=sk-ant-...    # Claude models
 export OPENAI_API_KEY=sk-...           # OpenAI models
-```
 
-Or configure persistently:
-
-```bash
+# Persistent config
 wizard config set apiKey sk-ant-...
+wizard config set model opus
 wizard config set network devnet
 wizard config set keypairPath ~/.config/solana/id.json
 ```
@@ -185,42 +269,47 @@ wizard config set keypairPath ~/.config/solana/id.json
 
 ```
 src/
-├── cli.ts                 Entry point, CLI argument parsing
+├── cli.ts                 CLI entry point + subcommands
 ├── config/
 │   ├── constants.ts       Models, networks, program IDs, token mints
-│   └── settings.ts        Persistent config, free tier rate limiting
+│   └── settings.ts        Persistent config, rate limiting
 ├── core/
 │   ├── repl.ts            Interactive REPL, slash commands, markdown rendering
-│   └── system-prompt.ts   Claude system prompt with full Mythic L2 context
+│   └── system-prompt.ts   System prompt with Mythic L2 context
 ├── providers/
 │   └── claude.ts          Anthropic SDK streaming + tool_use loop
 └── tools/
-    ├── registry.ts        Tool aggregation and routing
-    ├── filesystem/        File read, write, edit, glob, grep
-    ├── shell/             Bash command execution
-    ├── solana/            Solana L1 blockchain operations
-    └── mythic/            Mythic L2 ecosystem tools
+    ├── registry.ts        Tool aggregation
+    ├── filesystem/        read, write, edit, glob, grep
+    ├── shell/             bash execution
+    ├── solana/            L1 blockchain operations
+    └── mythic/            L2 ecosystem tools
+
+templates/                 Claude Code agent setup files
+├── CLAUDE.md              Project instructions
+├── agents/                3 specialist agents
+├── skills/                5 slash commands
+└── settings.local.json    Tool permissions
 ```
 
-## Build
+## Build from Source
 
 ```bash
 git clone https://github.com/MythicFoundation/wizard-cli.git
 cd wizard-cli
 npm install
-npm run build    # outputs to dist/cli.js
-npm link         # links 'wizard' command globally
+npm run build
+npm link
 ```
 
 ## Links
 
-- **Website**: [wizardcli.com](https://wizardcli.com)
-- **Docs**: [wizardcli.com/#docs](https://wizardcli.com/#docs)
-- **Mythic L2**: [mythic.sh](https://mythic.sh)
-- **MythicSwap**: [mythicswap.app](https://mythicswap.app)
-- **Mythic.Fun**: [mythic.fun](https://mythic.fun)
-- **Foundation**: [mythic.foundation](https://mythic.foundation)
+- [Mythic L2](https://mythic.sh) — Main network
+- [MythicSwap](https://mythicswap.app) — DEX
+- [Mythic.Fun](https://mythic.fun) — Launchpad
+- [Mythic Foundation](https://mythic.foundation) — Governance
+- [Mythic Labs](https://mythiclabs.io) — Company
 
 ## License
 
-MIT — see [LICENSE](LICENSE) for details.
+MIT
